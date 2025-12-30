@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field
-from typing import List
 
 
 class Settings(BaseSettings):
@@ -12,11 +11,23 @@ class Settings(BaseSettings):
         "https://api.groq.com/openai/v1", env="GROQ_BASE_URL"
     )
 
-    # Valid API keys for your clients (comma-separated)
-    valid_api_keys: str = Field(..., env="VALID_API_KEYS")
-
     # Default model (Llama Maverick)
     default_model: str = Field("llama-3.3-70b-versatile", env="DEFAULT_MODEL")
+
+    # Database URL
+    mongodb_url: str = Field("mongodb://localhost:27017", env="MONGODB_URL")
+    database_name: str = Field("neuro_router", env="DATABASE_NAME")
+
+    # JWT auth
+    jwt_secret_key: str = Field(..., env="JWT_SECRET_KEY")
+    jwt_algorithm: str = Field("HS256", env="JWT_ALGORITHM")
+    jwt_expire_minutes: int = Field(60 * 24, env="JWT_EXPIRE_MINUTES")
+
+    # Monthly token limit (0 disables limit)
+    monthly_token_limit: int = Field(0, env="MONTHLY_TOKEN_LIMIT")
+
+    # Google OAuth
+    google_client_id: str = Field(None, env="GOOGLE_CLIENT_ID")
 
     # CORS
     cors_allow_origins: str = Field("*", env="CORS_ALLOW_ORIGINS")
@@ -24,10 +35,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
-
-    def get_valid_keys(self) -> List[str]:
-        """Parse valid API keys from comma-separated string"""
-        return [key.strip() for key in self.valid_api_keys.split(",") if key.strip()]
+        extra = "ignore"
 
 
 settings = Settings()

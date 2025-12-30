@@ -1,0 +1,89 @@
+/* pricing.module.css */
+
+.page {
+    min-height: 100vh;
+    background-color: var(--background);
+}
+
+.container {
+    margin: 0 auto;
+    padding: 6rem 1rem;
+    max-width: 1400px;
+}
+
+.header {
+    margin-bottom: 3rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+@media (min-width: 768px) {
+    .title {
+        font-size: 3rem;
+    }
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: var(--muted-foreground);
+}
+
+.grid {
+    display: grid;
+    gap: 2rem;
+    margin: 0 auto;
+    max-width: 64rem;
+}
+
+@media (min-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 1rem;
+    /* rounded-xl */
+}
+
+.cardHighlight {
+    border-color: rgba(59, 130, 246, 0.5);
+    background-color: rgba(59, 130, 246, 0.05);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+}
+
+.cardTitle {
+    margin-top: 1rem;
+    display: flex;
+    align-items: baseline;
+    font-size: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+.cardFeatures {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.featureItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+}

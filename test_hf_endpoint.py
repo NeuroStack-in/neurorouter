@@ -3,10 +3,14 @@ Test script for NeuroStack API on Hugging Face
 """
 from openai import OpenAI
 import sys
+import os
 
 # NeuroStack API Configuration
-NEUROSTACK_BASE_URL = "https://kiranparthiban-neuro-router.hf.space/v1"
-NEUROSTACK_API_KEY = "neurostack_a1b2c3d4e5f6g"  # Replace with your actual key
+NEUROSTACK_BASE_URL = os.getenv("NEUROSTACK_BASE_URL", "https://kiranparthiban-neuro-router.hf.space/v1")
+NEUROSTACK_API_KEY = os.getenv("NEUROSTACK_API_KEY")  # Set to a valid key from /api-keys
+
+if not NEUROSTACK_API_KEY:
+    raise RuntimeError("Set NEUROSTACK_API_KEY env var to a valid key generated via /api-keys")
 
 def test_chat_completion():
     """Test basic chat completion"""

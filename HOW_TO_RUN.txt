@@ -13,14 +13,17 @@ TERMINAL 1 (Server):
 3. Activate conda:
    conda activate mcc-project
 
-4. Start the server:
+4. (First run only) initialize the database:
+   python -m app.database
+
+5. Start the server:
    python run.py
 
-5. You should see:
+6. You should see:
    INFO: Uvicorn running on http://0.0.0.0:7860
    INFO: Application startup complete.
 
-6. KEEP THIS TERMINAL OPEN! Don't close it.
+7. KEEP THIS TERMINAL OPEN! Don't close it.
 
 
 TERMINAL 2 (Client/Testing):
@@ -77,13 +80,24 @@ Available:
 - POST /v1/completions  
 - GET  /v1/models
 
-API Key: neurostack_a1b2c3d4e5f6g
+Auth management (outside /v1):
+- POST /auth/register
+- POST /auth/login
+- POST /api-keys
+- GET  /api-keys
+- DELETE /api-keys/{id}
+
+Workflow to get an API key:
+1) Register: POST /auth/register (email, password)
+2) Login: POST /auth/login to get JWT
+3) Create key: POST /api-keys with JWT -> raw key returned once
+4) Use API key for /v1/* calls: Authorization: Bearer neurostack_xxxxxxxxxxxxx
 
 
 TEST WITH CURL (while server running):
 ---------------------------------------
 curl -X POST http://localhost:7860/v1/chat/completions ^
-  -H "Authorization: Bearer neurostack_a1b2c3d4e5f6g" ^
+  -H "Authorization: Bearer YOUR_GENERATED_API_KEY" ^
   -H "Content-Type: application/json" ^
   -d "{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}],\"max_tokens\":20}"
 

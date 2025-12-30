@@ -2,8 +2,14 @@
 Quick test to check if proxy is responding
 """
 import requests
+import os
 
 print("Testing proxy server...")
+
+API_KEY = os.getenv("NEUROSTACK_API_KEY")
+if not API_KEY:
+    print("Set NEUROSTACK_API_KEY env var to a valid key generated via /api-keys.")
+    raise SystemExit(1)
 
 try:
     # Test 1: Health check
@@ -21,7 +27,7 @@ try:
     # Test 3: Simple API call
     print("\n3. Testing chat endpoint...")
     headers = {
-        "Authorization": "Bearer neurostack_a1b2c3d4e5f6g",
+        "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {

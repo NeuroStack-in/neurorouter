@@ -3,10 +3,14 @@ Test script for NeuroStack OpenAI Proxy
 """
 import requests
 import json
+import os
 
 # Configuration
 BASE_URL = "http://localhost:7860"
-API_KEY = "neurostack_a1b2c3d4e5f6g"  # Replace with your actual API key
+API_KEY = os.getenv("NEUROSTACK_API_KEY")  # Set to a valid key from /api-keys
+
+if not API_KEY:
+    raise RuntimeError("Set NEUROSTACK_API_KEY env var to a valid key generated via /api-keys")
 
 headers = {
     "Authorization": f"Bearer {API_KEY}",

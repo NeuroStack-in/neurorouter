@@ -37,17 +37,24 @@ cd D:\Clients\neuro_router
 pip install -r requirements.txt
 ```
 
-3. **Configure environment**
-```bash
-# Copy .env.example to .env
-copy .env.example .env
+ 3. **Configure environment**
+ ```bash
+ # Copy .env.example to .env
+ copy .env.example .env
 
-# Edit .env and add your keys:
-# GROQ_API_KEY=gsk_your_groq_api_key_here
-# VALID_API_KEYS=neurostack_a1b2c3d4e5f6g,neurostack_h7i8j9k0l1m2n
+ # Edit .env and add your keys:
+ # GROQ_API_KEY=gsk_your_groq_api_key_here
+ # DATABASE_URL=sqlite:///./neuro_router.db
+ # JWT_SECRET_KEY=your_long_random_string
+ # MONTHLY_TOKEN_LIMIT=0   # set >0 to enforce monthly cap per user
+ ```
+
+4. **Initialize the database (first run)**
+```bash
+python -m app.database
 ```
 
-4. **Run the server**
+5. **Run the server**
 ```bash
 python run.py
 ```
@@ -68,16 +75,22 @@ http://localhost:7860/v1
 | `/v1/chat/completions` | POST | Chat completions (OpenAI compatible) |
 | `/v1/completions` | POST | Text completions (OpenAI compatible) |
 | `/v1/models` | GET | List available models |
+| `/auth/register` | POST | Register a new user (email/password) |
+| `/auth/login` | POST | Login and receive JWT |
+| `/api-keys` | POST | Create a new API key (JWT protected) |
+| `/api-keys` | GET | List your API keys (JWT protected, no raw key) |
+| `/api-keys/{id}` | DELETE | Revoke an API key (JWT protected) |
+| `/auth/google` | POST | Login/Register with Google ID token |
 | `/healthz` | GET | Health check |
 | `/` | GET | Service info |
 
 ## 🔐 Authentication
 
-All requests require Bearer token authentication:
-
-```bash
-Authorization: Bearer neurostack_XXXXXXXXXXXXX
-```
+- Register with email/password: `POST /auth/register`
+- Login to get JWT: `POST /auth/login` → `{"access_token": "...", "token_type": "bearer"}`
+- Create API keys with your JWT: `POST /api-keys` (raw key returned once)
+- Clients call `/v1/*` endpoints using `Authorization: Bearer neurostack_XXXXXXXXXXXXX`
+- JWT is only for managing your account/API keys; it is **not** used for `/v1` proxy calls
 
 ## 💻 Usage Examples
 
@@ -88,7 +101,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="http://localhost:7860/v1",
-    api_key="neurostack_a1b2c3d4e5f6g"
+    api_key="YOUR_GENERATED_API_KEY"
 )
 
 # Simple chat
@@ -115,7 +128,7 @@ for chunk in stream:
 
 ```bash
 curl -X POST http://localhost:7860/v1/chat/completions \
-  -H "Authorization: Bearer neurostack_a1b2c3d4e5f6g" \
+  -H "Authorization: Bearer YOUR_GENERATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4",
@@ -131,7 +144,7 @@ const OpenAI = require('openai');
 
 const client = new OpenAI({
   baseURL: 'http://localhost:7860/v1',
-  apiKey: 'neurostack_a1b2c3d4e5f6g'
+  apiKey: 'YOUR_GENERATED_API_KEY'
 });
 
 async function main() {
@@ -146,6 +159,8 @@ main();
 ```
 
 ## 🧪 Testing
+
+Set `NEUROSTACK_API_KEY` to a valid key generated via `/api-keys` before running the scripts below.
 
 ### Quick Test
 ```bash
@@ -197,23 +212,43 @@ GROQ_API_KEY=gsk_your_groq_api_key_here
 # Groq base URL (OpenAI-compatible endpoint)
 GROQ_BASE_URL=https://api.groq.com/openai/v1
 
-# Your custom API keys (comma-separated)
-VALID_API_KEYS=neurostack_a1b2c3d4e5f6g,neurostack_h7i8j9k0l1m2n
-
 # Model to use (Llama Maverick)
 DEFAULT_MODEL=llama-3.3-70b-versatile
 
 # CORS settings
 CORS_ALLOW_ORIGINS=*
+
+# Database configuration
+DATABASE_URL=sqlite:///./neuro_router.db
+
+# JWT and API key management
+JWT_SECRET_KEY=change_me
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=1440
+
+# Monthly token limit per user (0 disables limit)
+MONTHLY_TOKEN_LIMIT=0
+
+# Google OAuth
+GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
 ```
 
 ## 🔄 How It Works
 
 1. **Client sends request** → with any OpenAI model name
-2. **Proxy authenticates** → validates neurostack API key
-3. **Model conversion** → changes to `llama-3.3-70b-versatile`
-4. **Forward to Groq** → sends request to Groq Cloud
-5. **Return response** → sends back in OpenAI format
+2. **Proxy authenticates** → validates neurostack API key against the database
+3. **Usage guard** → enforces per-user monthly token limit (if configured)
+4. **Model conversion** → changes to `llama-3.3-70b-versatile`
+5. **Forward to Groq** → sends request to Groq Cloud
+6. **Return response + record usage** → sends back in OpenAI format and records tokens per user/key/model/month
+
+## Token Accounting
+
+- Usage is recorded per `user_id` + `api_key_id` + `model` + `YYYY-MM`
+- Tokens come from Groq responses: `usage.prompt_tokens` (input) and `usage.completion_tokens` (output)
+- Streaming requests capture the final usage block before `[DONE]`
+- Monthly limit (`MONTHLY_TOKEN_LIMIT`) is enforced per user; if reached, the proxy returns HTTP 429 without forwarding
+- Initialize tables with `python -m app.database` (creates `users`, `api_keys`, `monthly_usage`)
 
 The client never knows they're using Groq - it's completely transparent!
 
@@ -243,8 +278,12 @@ CMD ["python", "run.py"]
 
 4. Add secrets in Space settings:
    - `GROQ_API_KEY`
-   - `VALID_API_KEYS`
+   - `DATABASE_URL`
+   - `JWT_SECRET_KEY`
+   - `JWT_ALGORITHM`
+   - `JWT_EXPIRE_MINUTES`
    - `DEFAULT_MODEL`
+   - `MONTHLY_TOKEN_LIMIT`
 
 5. Push and deploy!
 
@@ -269,12 +308,10 @@ Server auto-reloads on code changes.
 
 ### Adding New API Keys
 
-Edit `.env`:
-```env
-VALID_API_KEYS=neurostack_key1,neurostack_key2,neurostack_key3
-```
-
-Restart server to apply changes.
+Use the API:
+1. `POST /auth/register` (if you don't have an account)
+2. `POST /auth/login` to get JWT
+3. `POST /api-keys` with the JWT to generate a new key (raw key shown once)
 
 ## 📊 Monitoring
 
@@ -324,7 +361,7 @@ Share this with your clients:
 from openai import OpenAI
 client = OpenAI(
     base_url="http://your-server:7860/v1",
-    api_key="neurostack_a1b2c3d4e5f6g"
+    api_key="YOUR_GENERATED_API_KEY"
 )
 ```
 
