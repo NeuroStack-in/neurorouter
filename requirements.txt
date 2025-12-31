@@ -8,3 +8,4 @@ openai>=1.0.0
 requests>=2.31.0
 motor>=3.3.0
 beanie>=1.25.0
+email-validator
