@@ -17,6 +17,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def on_startup():
+    print(f"DEBUG: Allowed Origins: {origins}")
     await init_db()
 
 # CORS
@@ -25,13 +26,12 @@ origins_raw = settings.cors_allow_origins.split(",")
 origins = []
 for o in origins_raw:
     o_clean = o.strip()
-    if o_clean:
+    if o_clean and o_clean != "*":
          origins.append(o_clean)
 
 # If only "*" is present and we want credentials, we must be specific.
-# ideally for production set specific origins.
-# But if it's "*", FastAPI's CORSMiddleware with allow_credentials=True creates issues if we pass ["*"].
-# We'll allow specific known dev ports + whatever is in env.
+# FastAPI's CORSMiddleware with allow_credentials=True creates issues if we pass ["*"].
+# We'll allow specific known dev ports + whatever is in env (excluding *).
 
 if "http://localhost:3000" not in origins:
     origins.append("http://localhost:3000")
