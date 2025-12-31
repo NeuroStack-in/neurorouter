@@ -7,6 +7,8 @@ from .routers.auth_routes import router as auth_router
 from .routers.openai_proxy import router as openai_router
 from .routers.dashboard_routes import router as dashboard_router
 
+# -------------------- APP --------------------
+
 app = FastAPI(
     title="NeuroStack OpenAI-Compatible Proxy",
     description="OpenAI-compatible API that routes to Groq's Llama Maverick model",
@@ -15,35 +17,29 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-@app.on_event("startup")
-async def on_startup():
-    print(f"DEBUG: Allowed Origins: {origins}")
-    await init_db()
+# -------------------- CORS --------------------
 
-# CORS
-# CORS
-origins_raw = settings.cors_allow_origins.split(",")
 origins = []
-for o in origins_raw:
-    o_clean = o.strip()
-    if o_clean and o_clean != "*":
-         origins.append(o_clean)
 
-# If only "*" is present and we want credentials, we must be specific.
-# FastAPI's CORSMiddleware with allow_credentials=True creates issues if we pass ["*"].
-# We'll allow specific known dev ports + whatever is in env (excluding *).
+# From ENV (comma-separated)
+if settings.cors_allow_origins:
+    for o in settings.cors_allow_origins.split(","):
+        o = o.strip()
+        if o and o != "*":
+            origins.append(o)
 
-if "http://localhost:3000" not in origins:
-    origins.append("http://localhost:3000")
-if "http://127.0.0.1:3000" not in origins:
-    origins.append("http://127.0.0.1:3000")
+# Local dev
+origins.extend([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+])
 
-# Add the explicit frontend domain user provided
-# In production, users should set CORS_ALLOW_ORIGINS env var to this domain.
-# But hardcoding it here as a fallback ensures it works now.
+# Production frontend (Render)
 PRODUCTION_FRONTEND = "https://router-neurostack-in.onrender.com"
 if PRODUCTION_FRONTEND not in origins:
     origins.append(PRODUCTION_FRONTEND)
+
+print("✅ CORS ALLOWED ORIGINS:", origins)
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,11 +49,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# -------------------- STARTUP --------------------
+
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
+
+# -------------------- ROUTERS --------------------
+
 app.include_router(auth_router)
 app.include_router(openai_router)
 app.include_router(dashboard_router)
 
+# -------------------- HEALTH --------------------
 
 @app.get("/")
 async def root():
@@ -69,9 +73,8 @@ async def root():
             "completions": "/v1/completions",
             "models": "/v1/models"
         },
-        "auth": "Required - Bearer neurostack_XXXXXXXXXXXXX (13 alphanumeric chars)"
+        "auth": "Required - Bearer neurostack_XXXXXXXXXXXXX"
     }
-
 
 @app.get("/healthz")
 async def healthz():
