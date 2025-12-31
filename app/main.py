@@ -20,26 +20,34 @@ async def on_startup():
     await init_db()
 
 # CORS
-origins_raw = [o.strip() for o in settings.cors_allow_origins.split(",") if o.strip()]
+# CORS
+origins_raw = settings.cors_allow_origins.split(",")
 origins = []
-# Filter out wildcard '*' if it exists, as it cannot be used with allow_credentials=True
-for origin in origins_raw:
-    if origin != "*":
-        origins.append(origin)
+for o in origins_raw:
+    o_clean = o.strip()
+    if o_clean:
+         origins.append(o_clean)
 
-# Add frontend origins explicitly
+# If only "*" is present and we want credentials, we must be specific.
+# ideally for production set specific origins.
+# But if it's "*", FastAPI's CORSMiddleware with allow_credentials=True creates issues if we pass ["*"].
+# We'll allow specific known dev ports + whatever is in env.
+
 if "http://localhost:3000" not in origins:
     origins.append("http://localhost:3000")
 if "http://127.0.0.1:3000" not in origins:
     origins.append("http://127.0.0.1:3000")
 
+# Add the explicit frontend domain user provided
+# In production, users should set CORS_ALLOW_ORIGINS env var to this domain.
+# But hardcoding it here as a fallback ensures it works now.
+PRODUCTION_FRONTEND = "https://router-neurostack-in.onrender.com"
+if PRODUCTION_FRONTEND not in origins:
+    origins.append(PRODUCTION_FRONTEND)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://router-neurostack-in.onrender.com",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
