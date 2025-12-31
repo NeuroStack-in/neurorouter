@@ -8,7 +8,7 @@ python-dotenv==1.0.1
 # Auth / Security
 python-jose[cryptography]
 passlib[bcrypt]
-bcrypt
+bcrypt==4.1.2
 
 # AI / API
 openai>=1.0.0
