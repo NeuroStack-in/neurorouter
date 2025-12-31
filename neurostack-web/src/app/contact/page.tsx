@@ -56,31 +56,31 @@ export default function ContactPage() {
     }
 
     return (
-        <main className="min-h-screen bg-background flex flex-col">
+        <main className="min-h-screen bg-white flex flex-col">
             <Navbar />
-            <div className="flex-1 flex items-center justify-center p-6 pt-24 bg-gradient-to-b from-background to-muted/20">
-                <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl">
+            <div className="flex-1 flex items-center justify-center p-6 pt-24 bg-white">
+                <Card className="w-full max-w-md border-slate-200 bg-white shadow-xl">
                     <CardHeader className="space-y-1">
-                        <CardTitle className="text-2xl font-bold tracking-tight">Contact Support</CardTitle>
-                        <CardDescription className="text-muted-foreground">
+                        <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">Contact Support</CardTitle>
+                        <CardDescription className="text-slate-500">
                             Need help? Fill out the form below and we'll get back to you.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name" className="text-slate-700">Name</Label>
                                 <Input
                                     id="name"
                                     value={formData.name}
                                     onChange={handleChange}
                                     placeholder="John Doe"
                                     required
-                                    className="bg-background/50 border-input focus-visible:ring-primary backdrop-blur-sm"
+                                    className="bg-white border-slate-200 focus-visible:ring-blue-500 text-slate-900 placeholder:text-slate-400"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email" className="text-slate-700">Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -88,14 +88,14 @@ export default function ContactPage() {
                                     onChange={handleChange}
                                     placeholder="john@example.com"
                                     required
-                                    className="bg-background/50 border-input focus-visible:ring-primary backdrop-blur-sm"
+                                    className="bg-white border-slate-200 focus-visible:ring-blue-500 text-slate-900 placeholder:text-slate-400"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="message">Message</Label>
+                                <Label htmlFor="message" className="text-slate-700">Message</Label>
                                 <textarea
                                     id="message"
-                                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 backdrop-blur-sm px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+                                    className="flex min-h-[120px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                                     value={formData.message}
                                     onChange={handleChange}
                                     placeholder="How can we help?"
@@ -103,7 +103,7 @@ export default function ContactPage() {
                                 />
                             </div>
 
-                            <Button className="w-full" type="submit" disabled={status === "loading"}>
+                            <Button className="w-full bg-slate-900 text-white hover:bg-slate-800" type="submit" disabled={status === "loading"}>
                                 {status === "loading" ? (
                                     "Sending..."
                                 ) : (
@@ -116,29 +116,29 @@ export default function ContactPage() {
 
                             {/* Status Messages */}
                             {status === "success" && (
-                                <p className="text-green-500 mt-2 text-center text-sm font-medium animate-in fade-in slide-in-from-top-1">Message sent successfully!</p>
+                                <p className="text-green-600 mt-2 text-center text-sm font-medium animate-in fade-in slide-in-from-top-1">Message sent successfully!</p>
                             )}
                             {status === "error" && (
-                                <p className="text-destructive mt-2 text-center text-sm font-medium animate-in fade-in slide-in-from-top-1">Failed to send message. Please try again.</p>
+                                <p className="text-red-600 mt-2 text-center text-sm font-medium animate-in fade-in slide-in-from-top-1">Failed to send message. Please try again.</p>
                             )}
                         </form>
 
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-muted" />
+                                <span className="w-full border-t border-slate-200" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-background px-2 text-muted-foreground">
+                                <span className="bg-white px-2 text-slate-500">
                                     Or
                                 </span>
                             </div>
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        <div className="text-center text-sm text-slate-500">
                             <p>Email us directly at</p>
                             <a
                                 href="mailto:neurostackinfo@gmail.com"
-                                className="inline-flex items-center mt-1 font-medium text-primary hover:underline underline-offset-4 transition-colors"
+                                className="inline-flex items-center mt-1 font-medium text-blue-600 hover:underline underline-offset-4 transition-colors"
                             >
                                 <Mail className="mr-2 h-3 w-3" />
                                 neurostackinfo@gmail.com

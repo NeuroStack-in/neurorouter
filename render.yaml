@@ -34,6 +34,6 @@ services:
       - key: NODE_VERSION
         value: 20.10.0
       - key: NEXT_PUBLIC_API_BASE
-        sync: false # Set this to your backend URL (e.g., https://neurostack-backend.onrender.com)
+        value: https://neurostack-backend.onrender.com
       - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
         sync: false 

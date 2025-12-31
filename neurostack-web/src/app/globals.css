@@ -1,10 +1,12 @@
 @import "tailwindcss";
-
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* -------------------------------
+   Theme Variables
+-------------------------------- */
 
 :root {
+  /* Light theme (default) */
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
 
@@ -36,6 +38,10 @@
   --radius: 0.5rem;
 }
 
+/* -------------------------------
+   Dark Theme (opt-in)
+-------------------------------- */
+
 .dark {
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
@@ -64,7 +70,13 @@
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
   --ring: 212.7 26.8% 83.9%;
+
+  color-scheme: dark;
 }
+
+/* -------------------------------
+   Tailwind Theme Mapping
+-------------------------------- */
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -98,26 +110,51 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-  
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from { height: 0 }
-    to { height: var(--radix-accordion-content-height) }
+    from {
+      height: 0
+    }
+
+    to {
+      height: var(--radix-accordion-content-height)
+    }
   }
+
   @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height) }
-    to { height: 0 }
+    from {
+      height: var(--radix-accordion-content-height)
+    }
+
+    to {
+      height: 0
+    }
   }
 }
 
-/* Base styles */
+/* -------------------------------
+   Base Styles (SAFE)
+-------------------------------- */
+
 @layer base {
-  * {
-    @apply border-border;
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
+
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+  }
+
+  /* ❌ Avoid global * selector */
+  button,
+  input,
+  textarea,
+  select {
+    border-color: hsl(var(--border));
   }
 }

@@ -86,11 +86,7 @@ export function Hero() {
                                 Start Building Free
                             </Button>
                         </Link>
-                        <Link href="/docs">
-                            <Button size="lg" variant="outline" className="h-12 px-8 text-base border-slate-200 text-slate-700 hover:bg-slate-50">
-                                View Documentation
-                            </Button>
-                        </Link>
+
                     </motion.div>
 
 
