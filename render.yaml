@@ -1,0 +1,39 @@
+services:
+  # Backend Service (Python/FastAPI)
+  - type: web
+    name: neurostack-backend
+    env: python
+    region: oregon 
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: MONGODB_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CORS_ALLOW_ORIGINS
+        value: "*" # Update this to your frontend URL in production
+
+  # Frontend Service (Next.js)
+  - type: web
+    name: neurostack-frontend
+    env: node
+    root: neurostack-web
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.10.0
+      - key: NEXT_PUBLIC_API_BASE
+        sync: false # Set this to your backend URL (e.g., https://neurostack-backend.onrender.com)
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false 
