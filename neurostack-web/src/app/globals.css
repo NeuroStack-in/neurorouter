@@ -16,11 +16,13 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
 
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
+  /* Navy #062a45 */
+  --primary: 206 84% 15%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  /* Orange #f47c28 */
+  --secondary: 25 90% 56%;
+  --secondary-foreground: 0 0% 100%;
 
   --muted: 210 40% 96.1%;
   --muted-foreground: 215.4 16.3% 46.9%;
@@ -33,7 +35,7 @@
 
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --ring: 206 84% 15%;
 
   --radius: 0.5rem;
 }
@@ -52,11 +54,21 @@
   --popover: 222.2 84% 4.9%;
   --popover-foreground: 210 40% 98%;
 
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  /* Navy Lightened? Or same? User said variants derived from extracted.
+     Maybe use Orange as primary in Dark mode? Or keep Navy as primary but ensure contrast?
+     Navy #062a45 is very dark. On dark bg it's invisible.
+     I should use Orange #f47c28 as Primary in Dark Mode?
+     Or a lighter shade of Navy? "Dark and light variants must be derived from the extracted colors only."
+     I cannot invent a lighter Navy.
+     I will use Orange as Primary in Dark Mode? Or just keep it accessible.
+     Let's try Orange as Primary in Dark Mode.
+  */
+  --primary: 25 90% 56%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  /* Navy as Secondary */
+  --secondary: 206 84% 15%;
+  --secondary-foreground: 0 0% 100%;
 
   --muted: 217.2 32.6% 17.5%;
   --muted-foreground: 215 20.2% 65.1%;
@@ -110,6 +122,21 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* Override blue/violet to enforce brand colors */
+  --color-blue-600: hsl(var(--primary));
+  --color-blue-500: hsl(var(--primary));
+  /* Maybe lighter? */
+  --color-blue-700: hsl(var(--primary));
+  /* Maybe darker? */
+  --color-blue-50: hsl(var(--primary) / 0.05);
+  --color-blue-100: hsl(var(--primary) / 0.1);
+  --color-blue-200: hsl(var(--primary) / 0.2);
+
+  --color-violet-600: hsl(var(--secondary));
+  --color-violet-500: hsl(var(--secondary));
+  --color-violet-50: hsl(var(--secondary) / 0.1);
+  --color-violet-100: hsl(var(--secondary) / 0.2);
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;

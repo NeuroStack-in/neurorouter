@@ -34,7 +34,7 @@ export function HowItWorks() {
                     {/* Step 1: Client */}
                     <StepCard
                         icon={<Server className="h-8 w-8 text-blue-600" />}
-                        title="Your Application"
+                        title="Client (OpenAI SDK)"
                         description="Send standard OpenAI-compatible requests."
                         delay={0}
                         color="blue"
@@ -57,7 +57,7 @@ export function HowItWorks() {
                                 <div className="mb-6 rounded-full bg-violet-50 p-4 border border-violet-100 shadow-sm">
                                     <Network className="h-10 w-10 text-violet-600" />
                                 </div>
-                                <h3 className="mb-3 text-xl font-bold text-slate-900">NeuroStack Engine</h3>
+                                <h3 className="mb-3 text-xl font-bold text-slate-900">NeuroRouter API</h3>
                                 <ul className="text-sm text-slate-500 space-y-2 text-left w-full px-4">
                                     <li className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-violet-500" />
@@ -82,11 +82,14 @@ export function HowItWorks() {
                     {/* Step 3: Provider */}
                     <StepCard
                         icon={<Cpu className="h-8 w-8 text-orange-600" />}
-                        title="Model Provider"
-                        description="Groq, OpenAI, Anthropic, or custom models."
+                        title="Self-Hosted LLMs"
+                        description="NeuroStack Infra. No requests are forwarded to  external providers."
                         delay={0.6}
                         color="orange"
                     />
+                </div>
+                <div className="mt-8 text-center text-sm text-slate-500">
+                    <p>NeuroRouter performs all inference on self-hosted LLMs.</p>
                 </div>
             </div>
         </section>

@@ -8,16 +8,16 @@ import { Plus, Minus } from "lucide-react"
 
 const faqs = [
     {
-        question: "How does NeuroStack handle API keys?",
-        answer: "NeuroStack encrypts all API keys using AES-256 encryption. We never store your keys in plain text and they are only decrypted at runtime within our secure enclave."
+        question: "How does NeuroRouter handle API keys?",
+        answer: "NeuroRouter encrypts all API keys using AES-256 encryption. We never store your keys in plain text and they are only decrypted at runtime within our secure enclave."
     },
     {
         question: "Can I use custom models?",
-        answer: "Yes! NeuroStack supports custom endpoints. You can route traffic to your own self-hosted models or fine-tuned versions on supported providers similarly to standard models."
+        answer: "Yes! NeuroRouter supports custom endpoints. You can route traffic to your own self-hosted models or fine-tuned versions on supported providers similarly to standard models."
     },
     {
-        question: "What is the cost of using NeuroStack?",
-        answer: "NeuroStack acts as a router. You pay the standard provider rates (e.g., to OpenAI or Anthropic) directly. We charge a small platform fee based on volume for routing, logging, and analytics transparency. Check our pricing page for details."
+        question: "What is the cost of using NeuroRouter?",
+        answer: "NeuroRouter acts as a router. You pay the standard provider rates (e.g., to OpenAI or Anthropic) directly. We charge a small platform fee based on volume for routing, logging, and analytics transparency. Check our pricing page for details."
     },
     {
         question: "Is there a latency overhead?",
@@ -30,14 +30,17 @@ export function FAQ() {
 
     return (
         <section className="py-24 relative bg-white">
-            <div className="container px-4 md:px-6 max-w-3xl">
+            <div className="container px-4 md:px-6 max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-4 text-slate-900">
                         Frequently Asked Questions
                     </h2>
+                    <p className="text-slate-600 max-w-2xl mx-auto">
+                        Everything you need to know about NeuroRouter's self-hosted infrastructure.
+                    </p>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                     {faqs.map((faq, index) => (
                         <motion.div
                             key={index}
@@ -45,16 +48,16 @@ export function FAQ() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className={cn(styles.superCard, "overflow-hidden border border-slate-200 bg-white")}
+                            className={cn(styles.superCard, "overflow-hidden border border-slate-200 bg-white h-fit")}
                         >
                             <button
                                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                                 className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition-colors"
                                 aria-expanded={openIndex === index}
                             >
-                                <span className="text-lg font-medium text-slate-800">{faq.question}</span>
-                                <span className="text-slate-400">
-                                    {openIndex === index ? <Minus className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                                <span className="text-lg font-medium text-slate-800 pr-4">{faq.question}</span>
+                                <span className={cn("text-slate-400 transition-transform duration-300", openIndex === index && "rotate-180")}>
+                                    {openIndex === index ? <Minus className="h-5 w-5 text-orange-500" /> : <Plus className="h-5 w-5" />}
                                 </span>
                             </button>
 

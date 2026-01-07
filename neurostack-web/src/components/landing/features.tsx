@@ -9,14 +9,14 @@ const features = [
         title: "Universal Compatibility",
         description: "Drop-in replacement for OpenAI SDKs. Switch models instantly without changing business logic or learning new APIs.",
         icon: Globe,
-        color: "rgba(59, 130, 246, 0.5)", // Blue
+        color: "rgba(249, 115, 22, 0.5)", // Orange
         visual: (
             <div className="relative flex items-center justify-center">
-                <div className="absolute h-24 w-24 rounded-full border border-blue-500/30" />
-                <div className="absolute h-32 w-32 rounded-full border border-blue-500/20" />
-                <Globe className="h-16 w-16 text-blue-400" />
-                <div className="absolute -right-12 -top-12 h-6 w-6 rounded-full bg-blue-500/20 blur-sm" />
-                <div className="absolute -bottom-8 -left-10 h-4 w-4 rounded-full bg-blue-400/20 blur-sm" />
+                <div className="absolute h-24 w-24 rounded-full border border-orange-500/30" />
+                <div className="absolute h-32 w-32 rounded-full border border-orange-500/20" />
+                <Globe className="h-16 w-16 text-orange-400" />
+                <div className="absolute -right-12 -top-12 h-6 w-6 rounded-full bg-orange-500/20 blur-sm" />
+                <div className="absolute -bottom-8 -left-10 h-4 w-4 rounded-full bg-orange-400/20 blur-sm" />
             </div>
         )
     },
@@ -24,19 +24,19 @@ const features = [
         title: "Enterprise-Grade Security",
         description: "Issue granular API keys with scoped permissions. Enforce strict rate limits and track usage per tenant in real-time.",
         icon: Shield,
-        color: "rgba(139, 92, 246, 0.5)", // Violet
+        color: "rgba(249, 115, 22, 0.5)", // Orange
         visual: (
             <div className="relative flex items-center justify-center">
-                <Shield className="relative z-10 h-16 w-16 text-violet-400" />
-                <Lock className="absolute -right-6 -top-4 h-8 w-8 text-violet-300/50" />
-                <div className="absolute inset-0 rounded-lg border border-violet-500/20 bg-violet-500/5 rotate-3 scale-110" />
-                <div className="absolute inset-0 rounded-lg border border-violet-500/20 bg-violet-500/5 -rotate-3 scale-110" />
+                <Shield className="relative z-10 h-16 w-16 text-orange-400" />
+                <Lock className="absolute -right-6 -top-4 h-8 w-8 text-orange-300/50" />
+                <div className="absolute inset-0 rounded-lg border border-orange-500/20 bg-orange-500/5 rotate-3 scale-110" />
+                <div className="absolute inset-0 rounded-lg border border-orange-500/20 bg-orange-500/5 -rotate-3 scale-110" />
             </div>
         )
     },
     {
-        title: "Groq LPU™ Performance",
-        description: "Experience blazing fast inference speeds with Llama 3 70B on Groq's dedicated LPU hardware. Zero latency compromises.",
+        title: "Ultra-Low Latency Inference",
+        description: "Experience blazing fast inference speeds with Llama 3 70B running on optimized self-hosted infrastructure. Zero third-party dependencies.",
         icon: Zap,
         color: "rgba(249, 115, 22, 0.5)", // Orange
         visual: (

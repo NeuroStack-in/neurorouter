@@ -17,8 +17,8 @@ const jetbrainsMono = JetBrains_Mono({
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "NeuroStack | Control Your AI Stack",
-  description: "OpenAI-compatible API router with secure keys and Groq-powered performance.",
+  title: "NeuroRouter | Control Your AI Stack",
+  description: "OpenAI-compatible API router with secure keys and self-hosted high-performance inference.",
 };
 
 export default function RootLayout({

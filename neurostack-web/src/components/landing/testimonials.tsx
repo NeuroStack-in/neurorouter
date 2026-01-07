@@ -8,40 +8,25 @@ import { ChevronLeft, ChevronRight, Quote } from "lucide-react"
 
 const testimonials = [
     {
-        quote: "NeuroStack has completely transformed how we build AI applications. The unified API is a game changer.",
-        author: "Sarah Chen",
-        role: "CTO at TechFlow",
-        avatar: "SC"
+        quote: "The team is very intelligent and knowledgable, very few have good grip on LLMs and they do have very deep subject knowledge. If given the roadmap clearly at the initial stages they will bring exponential results, otherwise they can also overkill out of the passion towards their work.",
+        author: "Ajay Shokar",
+        role: "Jobkart Canada",
+        avatar: "AS"
     },
     {
-        quote: "The best developer experience I've had in years. Integration was seamless and the performance is unmatched.",
-        author: "Michael Ross",
-        role: "Senior Engineer",
-        avatar: "MR"
-    },
-    {
-        quote: "Finally, a routing solution that actually balances cost and latency effectively without complex configuration.",
-        author: "Elena Rodriguez",
-        role: "AI Researcher",
-        avatar: "ER"
-    },
-    {
-        quote: "We reduced our inference costs by 40% in the first month just by switching to NeuroStack's intelligent routing.",
-        author: "David Kim",
-        role: "VP of Engineering at DataScale",
-        avatar: "DK"
-    },
-    {
-        quote: "The ability to switch between models instantly without code changes is exactly what we needed for our enterprise clients.",
-        author: "Amanda Low",
-        role: "Product Lead at InnovateCorp",
-        avatar: "AL"
+        quote: "NeuroRouter's unmatched technical depth in AI is truly impressive. They understood our unique challenges and delivered innovative, scalable solutions faster than expected.",
+        author: "Kishore",
+        role: "Zrae Global",
+        avatar: "K"
     }
 ]
 
 export function Testimonials() {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [direction, setDirection] = useState(0)
+
+    // Safety check for HMR or data changes
+    const safeIndex = currentIndex >= testimonials.length ? 0 : currentIndex
 
     const slideVariants = {
         enter: (direction: number) => ({
@@ -96,10 +81,10 @@ export function Testimonials() {
                     </motion.p>
                 </div>
 
-                <div className="relative max-w-5xl mx-auto min-h-[420px] flex items-center justify-center">
+                <div className="relative max-w-5xl mx-auto min-h-[600px] flex items-center justify-center">
                     <AnimatePresence initial={false} mode="wait" custom={direction}>
                         <motion.div
-                            key={currentIndex}
+                            key={safeIndex}
                             custom={direction}
                             variants={slideVariants}
                             initial="enter"
@@ -110,7 +95,7 @@ export function Testimonials() {
                                 opacity: { duration: 0.3 },
                                 scale: { duration: 0.3 }
                             }}
-                            className="absolute left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 flex justify-center"
+                            className="absolute left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 flex justify-center"
                         >
                             <div className={cn(styles.superCard, "w-full p-10 md:p-14 flex flex-col items-center text-center bg-white shadow-2xl shadow-blue-900/5 border border-slate-100 rounded-2xl relative overflow-hidden group")}>
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-violet-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -121,16 +106,16 @@ export function Testimonials() {
                                 </div>
 
                                 <p className="text-xl md:text-3xl text-slate-800 mb-10 font-medium leading-relaxed tracking-tight">
-                                    "{testimonials[currentIndex].quote}"
+                                    "{testimonials[safeIndex].quote}"
                                 </p>
 
                                 <div className="flex items-center gap-5">
                                     <div className="h-14 w-14 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-lg border-2 border-white shadow-md">
-                                        {testimonials[currentIndex].avatar}
+                                        {testimonials[safeIndex].avatar}
                                     </div>
                                     <div className="text-left">
-                                        <div className="font-bold text-slate-900 text-lg">{testimonials[currentIndex].author}</div>
-                                        <div className="text-sm text-slate-500 font-medium">{testimonials[currentIndex].role}</div>
+                                        <div className="font-bold text-slate-900 text-lg">{testimonials[safeIndex].author}</div>
+                                        <div className="text-sm text-slate-500 font-medium">{testimonials[safeIndex].role}</div>
                                     </div>
                                 </div>
                             </div>
@@ -160,12 +145,12 @@ export function Testimonials() {
                         <button
                             key={idx}
                             onClick={() => {
-                                setDirection(idx > currentIndex ? 1 : -1)
+                                setDirection(idx > safeIndex ? 1 : -1)
                                 setCurrentIndex(idx)
                             }}
                             className={cn(
                                 "h-2 rounded-full transition-all duration-300",
-                                idx === currentIndex ? "bg-blue-600 w-8" : "bg-slate-200 w-2 hover:bg-slate-300"
+                                idx === safeIndex ? "bg-blue-600 w-8" : "bg-slate-200 w-2 hover:bg-slate-300"
                             )}
                             aria-label={`Go to testimonial ${idx + 1}`}
                         />

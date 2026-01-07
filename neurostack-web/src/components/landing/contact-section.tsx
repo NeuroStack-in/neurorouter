@@ -11,7 +11,7 @@ export function ContactSection() {
                         Ready to scale your AI stack?
                     </h2>
                     <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
-                        Join thousands of developers building the future with NeuroStack.
+                        Join thousands of developers building the future with NeuroRouter.
                         Get started for free today.
                     </p>
                     <div className="flex items-center justify-center gap-4">

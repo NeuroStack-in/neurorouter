@@ -23,8 +23,8 @@
     inset: 0;
     z-index: 0;
     background-image:
-        radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 0% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 100% 0%, rgba(244, 124, 40, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(6, 42, 69, 0.08) 0%, transparent 50%);
     background-size: 100% 100%;
 }
 
@@ -50,7 +50,7 @@
 
 .badge:hover {
     border-color: #cbd5e1;
-    color: #0f172a;
+    color: #062a45;
     transform: translateY(-1px);
 }
 
@@ -59,7 +59,7 @@
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1.1;
-    color: #0f172a;
+    color: #062a45;
     margin-bottom: 1.5rem;
 }
 
@@ -70,7 +70,7 @@
 }
 
 .gradientText {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #062a45 0%, #f47c28 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

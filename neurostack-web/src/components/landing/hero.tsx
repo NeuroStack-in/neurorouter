@@ -60,9 +60,9 @@ export function Hero() {
                         transition={{ duration: 0.5, delay: 0.1 }}
                         className={styles.heroTitle}
                     >
-                        The Universal API for <br />
+                        Self-Hosted LLM Routing Engine <br />
                         <span className={styles.gradientText}>
-                            <TypewriterEffect words={["Intelligent Model Routing", "Cost Optimization", "Low Latency AI"]} />
+                            <TypewriterEffect words={["Built for Ultra-Low-Latency Inference", "Built for Private Infrastructure", "Built for Enterprise Scale"]} />
                         </span>
                     </motion.h1>
 
@@ -72,7 +72,7 @@ export function Hero() {
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className={styles.heroDescription}
                     >
-                        Access 100+ LLMs through a single, unified API. Optimize for cost, latency, or performance in real-time with our smart routing engine.
+                        NeuroRouter runs self-hosted LLMs inside NeuroStack infrastructure. Use it as a drop-in replacement for OpenAI APIs — no code changes required.
                     </motion.p>
 
                     <motion.div
@@ -82,11 +82,20 @@ export function Hero() {
                         className="flex flex-col sm:flex-row items-center justify-center gap-4"
                     >
                         <Link href="/auth?tab=register">
-                            <Button size="lg" className="h-12 px-8 text-base bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20">
+                            <Button size="lg" className="h-12 px-8 text-base bg-[#f47c28] hover:bg-[#e06b1b] text-white shadow-lg shadow-orange-500/20">
                                 Start Building Free
                             </Button>
                         </Link>
+                    </motion.div>
 
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="mt-8 text-sm text-slate-500/80 max-w-md mx-auto text-center"
+                    >
+                        Inference is performed entirely within NeuroRouter infrastructure. <br />
+                        No third-party LLM clouds are used.
                     </motion.div>
 
 

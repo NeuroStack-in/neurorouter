@@ -247,10 +247,7 @@ export default function AuthPage() {
                     {/* Left Side - Branding */}
                     <div className={styles.brandSection}>
                         <div className={styles.brandLogo}>
-                            <div className={styles.logoIcon}>
-                                <div className={styles.logoInner} />
-                            </div>
-                            <span className={styles.logoText}>NeuroStack</span>
+                            <img src="/logo.png" alt="NeuroRouter" className="h-10 w-auto" />
                         </div>
                         <h1 className={styles.brandTitle}>
                             AI-Powered Development Platform

@@ -37,7 +37,7 @@ export default function ApiKeysPage() {
                 <div className={styles.pageHeader} style={{ marginBottom: 0 }}>
                     <h2 className={styles.pageTitle}>API Keys</h2>
                     <p className={styles.pageDescription}>
-                        Manage your secret keys for accessing the NeuroStack API.
+                        Manage your secret keys for accessing the NeuroRouter API.
                     </p>
                 </div>
 

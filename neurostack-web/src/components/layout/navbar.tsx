@@ -15,9 +15,8 @@ export function Navbar() {
                     href="/"
                     className="flex items-center gap-2 font-bold text-xl tracking-tight"
                 >
-                    <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-                        NeuroStack
-                    </span>
+                    <img src="/logo.png" alt="NeuroRouter" className="h-8 w-auto" />
+                    <span className="sr-only">NeuroRouter</span>
                 </Link>
 
                 {/* Nav Links */}

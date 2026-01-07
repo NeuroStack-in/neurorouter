@@ -92,7 +92,7 @@ async def authenticate_user(email: str, password: str) -> Optional[User]:
 # API key handling
 # -------------------------------------------------------------------
 
-API_KEY_PATTERN = r"^neurostack_[a-zA-Z0-9]{13}$"
+API_KEY_PATTERN = r"^neurorouter_[a-zA-Z0-9]{13}$"
 
 
 class AuthenticatedAPIKey:
@@ -115,9 +115,9 @@ def generate_api_key():
         secrets.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
         for _ in range(13)
     )
-    raw_key = f"neurostack_{suffix}"
+    raw_key = f"neurorouter_{suffix}"
     key_hash = hash_api_key(raw_key)
-    key_prefix = raw_key[:15]
+    key_prefix = raw_key[:16] # Adjusted for longer prefix? neurorouter_ is 12 chars. 12+4=16? or keep 15?
     return raw_key, key_prefix, key_hash
 
 
@@ -131,7 +131,7 @@ async def verify_api_key(
     if len(parts) != 2:
         raise HTTPException(
             status_code=401,
-            detail="Invalid Authorization header format. Use: Bearer neurostack_XXXXXXXXXXXXX",
+            detail="Invalid Authorization header format. Use: Bearer neurorouter_XXXXXXXXXXXXX",
         )
 
     scheme, token = parts
@@ -141,7 +141,7 @@ async def verify_api_key(
     if not validate_api_key_format(token):
         raise HTTPException(
             status_code=401,
-            detail="Invalid API key format. Expected: neurostack_ followed by 13 alphanumeric characters",
+            detail="Invalid API key format. Expected: neurorouter_ followed by 13 alphanumeric characters",
         )
 
     token_hash = hash_api_key(token)

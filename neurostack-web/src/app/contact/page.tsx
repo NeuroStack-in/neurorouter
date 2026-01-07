@@ -137,11 +137,11 @@ export default function ContactPage() {
                         <div className="text-center text-sm text-slate-500">
                             <p>Email us directly at</p>
                             <a
-                                href="mailto:neurostackinfo@gmail.com"
+                                href="mailto:support@neurorouter.com"
                                 className="inline-flex items-center mt-1 font-medium text-blue-600 hover:underline underline-offset-4 transition-colors"
                             >
                                 <Mail className="mr-2 h-3 w-3" />
-                                neurostackinfo@gmail.com
+                                support@neurorouter.com
                             </a>
                         </div>
                     </CardContent>

@@ -14,10 +14,8 @@ export function Footer() {
                     <div className="space-y-4">
                         <Link href="/" prefetch={false} className="inline-block">
                             <span className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-mono text-sm">
-                                    NS
-                                </div>
-                                NeuroStack
+                                <img src="/logo.png" alt="NeuroRouter" className="h-8 w-auto" />
+                                <span className="sr-only">NeuroRouter</span>
                             </span>
                         </Link>
 
@@ -28,7 +26,7 @@ export function Footer() {
                         <div className="flex gap-4 pt-2">
                             <SocialLink href="https://github.com" icon={<Github className="w-5 h-5" />} />
                             <SocialLink href="https://twitter.com" icon={<Twitter className="w-5 h-5" />} />
-                            <SocialLink href="https://linkedin.com" icon={<Linkedin className="w-5 h-5" />} />
+                            <SocialLink href="https://www.linkedin.com/company/neurostack-org" icon={<Linkedin className="w-5 h-5" />} />
                         </div>
                     </div>
 
@@ -37,10 +35,8 @@ export function Footer() {
                         <div className="space-y-4">
                             <h4 className="font-semibold text-slate-900">Product</h4>
                             <ul className="space-y-2 text-sm text-slate-500">
-                                <DisabledLink>Features</DisabledLink>
                                 <FooterLink href="/pricing">Pricing</FooterLink>
                                 <FooterLink href="/docs">Documentation</FooterLink>
-                                <DisabledLink>Changelog</DisabledLink>
                             </ul>
                         </div>
 
@@ -49,7 +45,6 @@ export function Footer() {
                             <ul className="space-y-2 text-sm text-slate-500">
                                 <DisabledLink>About Us</DisabledLink>
                                 <DisabledLink>Blog</DisabledLink>
-                                <DisabledLink>Careers</DisabledLink>
                                 <FooterLink href="/contact">Contact</FooterLink>
                             </ul>
                         </div>
@@ -81,7 +76,7 @@ export function Footer() {
                 {/* Bottom Bar */}
                 <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-sm text-slate-400">
-                        © {new Date().getFullYear()} NeuroStack Inc. All rights reserved.
+                        © {new Date().getFullYear()} NeuroRouter Inc. All rights reserved.
                     </p>
 
                     <div className="flex gap-8 text-sm text-slate-400">

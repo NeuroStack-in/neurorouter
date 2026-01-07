@@ -1,7 +1,6 @@
 "use client"
 
 import styles from "@/app/home.module.css"
-import { Cloud, Cpu, Globe, Zap, Layers, Server, Shield } from "lucide-react";
 
 export function TrustedBy() {
     return (
@@ -10,25 +9,26 @@ export function TrustedBy() {
                 <p className={styles.trustedTitle}>
                     TRUSTED BY INNOVATIVE TEAMS
                 </p>
+
                 <div className={styles.scroller}>
                     <div className={styles.scrollerInner}>
-                        {/* Valid Lucide icons only */}
-                        <div className={styles.logoItem}><Cloud className="h-6 w-6" /> Vertex</div>
-                        <div className={styles.logoItem}><Cpu className="h-6 w-6" /> Anthropic</div>
-                        <div className={styles.logoItem}><Globe className="h-6 w-6" /> OpenAI</div>
-                        <div className={styles.logoItem}><Zap className="h-6 w-6" /> Mistral</div>
-                        <div className={styles.logoItem}><Layers className="h-6 w-6" /> Cohere</div>
-                        <div className={styles.logoItem}><Server className="h-6 w-6" /> Azure</div>
-                        <div className={styles.logoItem}><Shield className="h-6 w-6" /> AWS Bedrock</div>
+                        {/* Company names only */}
+                        <div className={styles.logoItem}>Agreeupon.ai</div>
+                        <div className={styles.logoItem}>Jobcart.ca</div>
+                        <div className={styles.logoItem}>Infiniqon Technologies</div>
+                        <div className={styles.logoItem}>Zrae Global</div>
+                        <div className={styles.logoItem}>StoryBook.ai</div>
+                        <div className={styles.logoItem}>R-Logics Solutions Limited</div>
+                        <div className={styles.logoItem}>AppBeez</div>
 
                         {/* Duplicate for infinite scroll */}
-                        <div className={styles.logoItem}><Cloud className="h-6 w-6" /> Vertex</div>
-                        <div className={styles.logoItem}><Cpu className="h-6 w-6" /> Anthropic</div>
-                        <div className={styles.logoItem}><Globe className="h-6 w-6" /> OpenAI</div>
-                        <div className={styles.logoItem}><Zap className="h-6 w-6" /> Mistral</div>
-                        <div className={styles.logoItem}><Layers className="h-6 w-6" /> Cohere</div>
-                        <div className={styles.logoItem}><Server className="h-6 w-6" /> Azure</div>
-                        <div className={styles.logoItem}><Shield className="h-6 w-6" /> AWS Bedrock</div>
+                        <div className={styles.logoItem}>Agreeupon.ai</div>
+                        <div className={styles.logoItem}>Jobcart.ca</div>
+                        <div className={styles.logoItem}>Infiniqon Technologies</div>
+                        <div className={styles.logoItem}>Zrae Global</div>
+                        <div className={styles.logoItem}>StoryBook.ai</div>
+                        <div className={styles.logoItem}>R-Logics Solutions Limited</div>
+                        <div className={styles.logoItem}>AppBeez</div>
                     </div>
                 </div>
             </div>

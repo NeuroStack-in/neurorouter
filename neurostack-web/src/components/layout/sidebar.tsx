@@ -54,12 +54,7 @@ export function DashboardSidebar() {
         <div className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
                 <Link href="/dashboard" className={styles.sidebarTitle}>
-                    <div className="h-8 w-8 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-lg">N</span>
-                    </div>
-                    <span className={styles.brandGradient}>
-                        NeuroStack
-                    </span>
+                    <img src="/logo.png" alt="NeuroRouter" className="h-8 w-auto" />
                 </Link>
             </div>
 
