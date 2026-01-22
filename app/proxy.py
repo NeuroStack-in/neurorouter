@@ -7,13 +7,14 @@ from fastapi import HTTPException
 # Removed sqlalchemy imports
 
 from .config import settings
-from .models import MonthlyUsage
+from .config import settings
 
 
-def groq_headers() -> Dict[str, str]:
+def groq_headers(api_key: Optional[str] = None) -> Dict[str, str]:
     """Headers for Groq API requests"""
+    token = api_key or settings.groq_api_key
     return {
-        "Authorization": f"Bearer {settings.groq_api_key}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
 
@@ -68,6 +69,7 @@ async def forward_to_groq(
     endpoint: str,
     body: Dict[str, Any],
     stream: bool = False,
+    api_key: Optional[str] = None,
 ):
     """
     Forward request to Groq OpenAI-compatible API.
@@ -83,7 +85,7 @@ async def forward_to_groq(
         resp = await client.stream(
             "POST",
             url,
-            headers=groq_headers(),
+            headers=groq_headers(api_key),
             json=payload,
             timeout=None,
         )
@@ -94,7 +96,7 @@ async def forward_to_groq(
 
     resp = await client.post(
         url,
-        headers=groq_headers(),
+        headers=groq_headers(api_key),
         json=payload,
         timeout=None,
     )
@@ -130,6 +132,10 @@ async def enforce_monthly_limit(user_id: str):
         )
 
 
+
+from .models import BillingCycle, SnapshotData, CalculatedCosts, BillingStatus, MonthlyUsage
+from beanie.operators import Inc, Set
+
 async def record_usage(
     user_id: str,
     api_key_id: str,
@@ -137,40 +143,106 @@ async def record_usage(
     usage: Dict[str, Any],
 ):
     """
-    Persist prompt/completion token counts after Groq responds.
+    Persist prompt/completion token counts directly to the current BillingCycle.
+    Live usage tracking = Pending Invoice.
+    Also updates granular MonthlyUsage for dashboard analytics.
     """
+    print(f"DEBUG: record_usage called for {user_id} with usage: {usage}")
     if not usage:
         return
 
     input_tokens = int(usage.get("prompt_tokens") or 0)
     output_tokens = int(usage.get("completion_tokens") or 0)
-    total_tokens = input_tokens + output_tokens
+    total_tokens_calc = input_tokens + output_tokens
     year_month = _current_year_month()
 
-    # Beanie logic
-    # Try to find existing record
-    record = await MonthlyUsage.find_one(
-        MonthlyUsage.user_id == str(user_id),
-        MonthlyUsage.api_key_id == str(api_key_id),
-        MonthlyUsage.model == model,
-        MonthlyUsage.year_month == year_month,
-    )
+    # 1. Update Aggregate BillingCycle (The Invoice)
+    result = await BillingCycle.find_one(
+        BillingCycle.user_id == str(user_id),
+        BillingCycle.year_month == year_month
+    ).inc({
+        "snapshot_data.total_input_tokens": input_tokens,
+        "snapshot_data.total_output_tokens": output_tokens
+    })
+    
+    if result.modified_count == 0:
+        # Document doesn't exist, create it.
+        from .billing_utils import FIXED_FEE_INR 
+        
+        invoice_num = f"INV-{year_month}-{user_id[:8].upper()}"
+        now = datetime.utcnow()
+        
+        existing = await BillingCycle.find_one(
+             BillingCycle.user_id == str(user_id),
+             BillingCycle.year_month == year_month
+        )
+        
+        if not existing:
+            new_cycle = BillingCycle(
+                user_id=str(user_id),
+                invoice_number=invoice_num,
+                year_month=year_month,
+                start_date=now,
+                end_date=now,
+                status=BillingStatus.PENDING,
+                due_date=now, 
+                grace_period_end=now, 
+                snapshot_data=SnapshotData(
+                    total_input_tokens=input_tokens, 
+                    total_output_tokens=output_tokens
+                ),
+                calculated_costs=CalculatedCosts(
+                     variable_cost_usd=0.0,
+                     fixed_cost_inr=float(FIXED_FEE_INR),
+                     total_due_display="Pending"
+                )
+            )
+            try:
+                await new_cycle.insert()
+            except Exception as e:
+                print(f"Inverse creation race: {e}")
+                # Retry Inc
+                await BillingCycle.find_one(
+                    BillingCycle.user_id == str(user_id),
+                    BillingCycle.year_month == year_month
+                ).inc({
+                    "snapshot_data.total_input_tokens": input_tokens,
+                    "snapshot_data.total_output_tokens": output_tokens
+                })
+        else:
+             await existing.inc({
+                "snapshot_data.total_input_tokens": input_tokens,
+                "snapshot_data.total_output_tokens": output_tokens
+            })
 
-    if not record:
-        record = MonthlyUsage(
+    # 2. Update Granular MonthlyUsage (For Dashboard)
+    # Upsert logic: find by user, month, model, api_key
+    # We use Beanie's update with upsert=True semantics via find_one().upsert()
+    
+    await MonthlyUsage.find_one(
+        MonthlyUsage.user_id == str(user_id),
+        MonthlyUsage.year_month == year_month,
+        MonthlyUsage.model == model,
+        MonthlyUsage.api_key_id == str(api_key_id)
+    ).upsert(
+        Set({
+            MonthlyUsage.updated_at: datetime.utcnow()
+        }),
+        Inc({
+            MonthlyUsage.input_tokens: input_tokens,
+            MonthlyUsage.output_tokens: output_tokens,
+            MonthlyUsage.total_tokens: total_tokens_calc,
+            MonthlyUsage.request_count: 1
+        }),
+        on_insert=MonthlyUsage(
             user_id=str(user_id),
-            api_key_id=str(api_key_id),
-            model=model,
             year_month=year_month,
+            model=model,
+            api_key_id=str(api_key_id),
             input_tokens=input_tokens,
             output_tokens=output_tokens,
-            total_tokens=total_tokens,
-            request_count=1,
+            total_tokens=total_tokens_calc,
+            request_count=1
         )
-        await record.insert()
-    else:
-        record.input_tokens += input_tokens
-        record.output_tokens += output_tokens
-        record.total_tokens += total_tokens
-        record.request_count += 1
-        await record.save()
+    )
+

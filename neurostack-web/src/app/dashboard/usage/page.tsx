@@ -87,58 +87,12 @@ export default function UsagePage() {
             <div className={styles.pageHeader}>
                 <h2 className={styles.pageTitle}>Usage</h2>
                 <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                    {/* Workspace Selector */}
-                    <div className="relative" ref={workspaceRef}>
-                        <button
-                            onClick={() => setWorkspaceOpen(!workspaceOpen)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-all shadow-sm min-w-[160px] justify-between"
-                        >
-                            <span>All Workspaces</span>
-                            <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", workspaceOpen && "rotate-180")} />
-                        </button>
-                        {workspaceOpen && (
-                            <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-100 rounded-lg shadow-lg z-20 py-1 animate-in fade-in zoom-in-95 duration-100">
-                                <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Select Workspace</div>
-                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between">
-                                    All Workspaces
-                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                </button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Team Engineering</button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Personal</button>
-                            </div>
-                        )}
-                    </div>
+                    {/* Workspace Selector Removed */}
 
-                    {/* Time Range Selector */}
+                    {/* Time Range Selector Removed */}
+
+                    {/* Month Navigation */}
                     <div className="flex items-center gap-2">
-                        <div className="relative" ref={periodRef}>
-                            <button
-                                onClick={() => setPeriodOpen(!periodOpen)}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-all shadow-sm min-w-[100px] justify-between"
-                            >
-                                <span>{activePeriod}</span>
-                                <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", periodOpen && "rotate-180")} />
-                            </button>
-                            {periodOpen && (
-                                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-slate-100 rounded-lg shadow-lg z-20 py-1 animate-in fade-in zoom-in-95 duration-100">
-                                    {["Day", "Week", "Month"].map(p => (
-                                        <button
-                                            key={p}
-                                            onClick={() => { setActivePeriod(p); setPeriodOpen(false) }}
-                                            className={cn(
-                                                "w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex justify-between items-center",
-                                                activePeriod === p && "bg-slate-50 font-medium"
-                                            )}
-                                        >
-                                            {p}
-                                            {activePeriod === p && <Check className="h-3 w-3 text-blue-500" />}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Month Navigation */}
                         <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm">
                             <button
                                 onClick={handlePrevMonth}
@@ -162,7 +116,6 @@ export default function UsagePage() {
 
             {/* Content Area */}
             <div className="mt-8">
-
                 {/* Secondary Filters Row */}
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
                     <div className="flex flex-wrap items-center gap-3">
@@ -342,9 +295,9 @@ export default function UsagePage() {
                             ))}
                         </div>
                     </div>
-                </div>
+                </div >
 
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

@@ -6,6 +6,7 @@ from .database import init_db
 from .routers.auth_routes import router as auth_router
 from .routers.openai_proxy import router as openai_router
 from .routers.dashboard_routes import router as dashboard_router
+from .routers.billing import router as billing_router
 
 # -------------------- APP --------------------
 
@@ -60,6 +61,7 @@ async def on_startup():
 app.include_router(auth_router)
 app.include_router(openai_router)
 app.include_router(dashboard_router)
+app.include_router(billing_router)
 
 # -------------------- HEALTH --------------------
 

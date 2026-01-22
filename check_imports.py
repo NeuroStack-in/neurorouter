@@ -1,0 +1,22 @@
+import sys
+import os
+
+# Add current directory to path
+sys.path.append(os.getcwd())
+
+print("Attempting to import app.main...")
+try:
+    from app import main
+    print("✅ Successfully imported app.main")
+except Exception as e:
+    print(f"❌ Failed to import app.main: {e}")
+    import traceback
+    traceback.print_exc()
+
+print("Attempting to import app.routers.billing...")
+try:
+    from app.routers import billing
+    print("✅ Successfully imported app.routers.billing")
+except Exception as e:
+    print(f"❌ Failed to import app.routers.billing: {e}")
+    traceback.print_exc()

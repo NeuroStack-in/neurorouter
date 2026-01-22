@@ -65,6 +65,7 @@ async def get_dashboard_overview(
         total_tokens=total_tokens,
         total_requests=total_requests,
         active_keys=active_keys_count,
+        account_status=current_user.account_status,
         recent_activity=activity_items[:5]
     )
 

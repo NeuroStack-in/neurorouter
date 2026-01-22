@@ -12,6 +12,7 @@ from ..proxy import (
     record_usage,
     stream_sse,
 )
+from ..billing_utils import check_billing_access
 
 router = APIRouter(prefix="/v1", tags=["OpenAI-compatible"])
 
@@ -28,19 +29,28 @@ async def chat_completions(
     body: Dict[str, Any] = await request.json()
     stream = bool(body.get("stream", False))
 
+    # Strict Billing Check
+    await check_billing_access(auth_context.user)
     await enforce_monthly_limit(str(auth_context.user.id))
+    
+    # Resolve Key
+    user_key = auth_context.user.groq_cloud_api_key or settings.groq_api_key
+
+    # Capture requested model for usage tracking
+    requested_model = body.get("model", settings.default_model)
+
     async with httpx.AsyncClient(timeout=None) as client:
         if stream:
             # Streaming response
             upstream = await forward_to_groq(
-                client, "chat/completions", body, stream=True
+                client, "chat/completions", body, stream=True, api_key=user_key
             )
 
             async def on_usage(usage_block: Dict[str, Any]):
                 await record_usage(
                     user_id=str(auth_context.user.id),
                     api_key_id=str(auth_context.api_key.id),
-                    model=settings.default_model,
+                    model=requested_model,
                     usage=usage_block,
                 )
 
@@ -55,14 +65,14 @@ async def chat_completions(
         else:
             # Non-streaming response
             data = await forward_to_groq(
-                client, "chat/completions", body, stream=False
+                client, "chat/completions", body, stream=False, api_key=user_key
             )
             usage_block = data.get("usage")
             if usage_block:
                 await record_usage(
                     user_id=str(auth_context.user.id),
                     api_key_id=str(auth_context.api_key.id),
-                    model=settings.default_model,
+                    model=requested_model,
                     usage=usage_block,
                 )
             return JSONResponse(status_code=200, content=data)
@@ -80,19 +90,27 @@ async def completions(
     body: Dict[str, Any] = await request.json()
     stream = bool(body.get("stream", False))
 
+    # Strict Billing Check
+    await check_billing_access(auth_context.user)
     await enforce_monthly_limit(str(auth_context.user.id))
+    
+    # Resolve Key
+    user_key = auth_context.user.groq_cloud_api_key or settings.groq_api_key
+
+    # Capture requested model for usage tracking
+    requested_model = body.get("model", settings.default_model)
 
     async with httpx.AsyncClient(timeout=None) as client:
         if stream:
             upstream = await forward_to_groq(
-                client, "chat/completions", body, stream=True
+                client, "chat/completions", body, stream=True, api_key=user_key
             )
 
             async def on_usage(usage_block: Dict[str, Any]):
                 await record_usage(
                     user_id=str(auth_context.user.id),
                     api_key_id=str(auth_context.api_key.id),
-                    model=settings.default_model,
+                    model=requested_model,
                     usage=usage_block,
                 )
 
@@ -106,7 +124,7 @@ async def completions(
             )
         else:
             data = await forward_to_groq(
-                client, "chat/completions", body, stream=False
+                client, "chat/completions", body, stream=False, api_key=user_key
             )
 
             usage_block = data.get("usage")
@@ -114,7 +132,7 @@ async def completions(
                 await record_usage(
                     user_id=str(auth_context.user.id),
                     api_key_id=str(auth_context.api_key.id),
-                    model=settings.default_model,
+                    model=requested_model,
                     usage=usage_block,
                 )
 
@@ -129,12 +147,15 @@ async def list_models(
     OpenAI-compatible models endpoint
     """
     url = "https://api.groq.com/openai/v1/models"
+    
+    # Resolve Key
+    user_key = auth_context.user.groq_cloud_api_key or settings.groq_api_key
 
     async with httpx.AsyncClient(timeout=None) as client:
         resp = await client.get(
             url,
             headers={
-                "Authorization": f"Bearer {settings.groq_api_key}",
+                "Authorization": f"Bearer {user_key}",
                 "Content-Type": "application/json",
             },
         )

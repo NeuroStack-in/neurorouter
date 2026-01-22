@@ -19,3 +19,6 @@ google-auth>=2.23.0
 motor>=3.3.0
 beanie>=1.25.0
 dnspython>=2.3.0
+
+# Reports
+reportlab>=4.0.0

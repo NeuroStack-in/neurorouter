@@ -11,13 +11,15 @@ async def init_db():
     
     # Initialize Beanie with the User and ApiKey models
     # We need to import them inside here to ensure they are fully defined before init
-    from .models import User, ApiKey, MonthlyUsage
+    from .models import User, ApiKey, MonthlyUsage, BillingCycle, AdminAuditLog
     
     await init_beanie(
         database=client[settings.database_name],
         document_models=[
             User,
             ApiKey,
-            MonthlyUsage
+            MonthlyUsage,
+            BillingCycle,
+            AdminAuditLog,
         ],
     )

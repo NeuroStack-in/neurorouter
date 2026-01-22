@@ -86,6 +86,7 @@ class DashboardOverview(BaseModel):
     total_tokens: int
     total_requests: int
     active_keys: int
+    account_status: str
     recent_activity: List[ActivityItem]
 
 

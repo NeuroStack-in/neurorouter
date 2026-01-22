@@ -24,8 +24,8 @@ const sidebarItems = [
         icon: BarChart3,
     },
     {
-        title: "Cost",
-        href: "/dashboard/cost",
+        title: "Billing",
+        href: "/dashboard/billing",
         icon: CreditCard,
     },
     {

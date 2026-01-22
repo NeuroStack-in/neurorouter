@@ -1,0 +1,352 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+    CreditCard,
+    AlertTriangle,
+    CheckCircle,
+    FileText,
+    Activity,
+    ShieldAlert
+} from "lucide-react";
+
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import styles from "./billing.module.css";
+
+// --- Types ---
+
+interface CurrentUsage {
+    user_id: string;
+    year_month: string;
+    input_tokens: number;
+    output_tokens: number;
+    estimated_variable_usd: number;
+    fixed_fee_inr: number;
+    total_display: string;
+}
+
+interface BillingCycle {
+    invoice_number: string;
+    year_month: string;
+    status: "PENDING" | "PAID" | "OVERDUE" | "VOID";
+    due_date: string;
+    grace_period_end: string;
+    calculated_costs: {
+        total_due_display: string;
+    };
+}
+
+interface BillingDashboardData {
+    current_month: CurrentUsage;
+    past_invoices: BillingCycle[];
+    account_status: "ACTIVE" | "GRACE" | "BLOCKED" | "PENDING_APPROVAL";
+}
+
+// --- Component ---
+
+export default function BillingPage() {
+    const [data, setData] = useState<BillingDashboardData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchBillingData();
+    }, []);
+
+    const fetchBillingData = async () => {
+        try {
+            const token = localStorage.getItem("jwt");
+            if (!token) throw new Error("Not authenticated");
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/me`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!res.ok) throw new Error("Failed to load billing data");
+
+            const jsonData = await res.json();
+            setData(jsonData);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getStatusBadgeVar = (status: string) => {
+        switch (status) {
+            case "PAID": return "default"; // or success if available, default is usually black/primary
+            case "PENDING": return "secondary";
+            case "OVERDUE": return "destructive";
+            default: return "outline";
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="p-8 space-y-4 animate-pulse">
+                <div className="h-12 bg-gray-200 rounded w-1/3"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="h-64 bg-gray-200 rounded"></div>
+                    <div className="h-64 bg-gray-200 rounded"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !data) {
+        return (
+            <div className="p-8 text-center text-red-500">
+                <AlertTriangle className="mx-auto h-12 w-12 mb-4" />
+                <h2 className="text-xl font-bold">Error Loading Billing</h2>
+                <p>{error}</p>
+                <Button variant="outline" className="mt-4" onClick={fetchBillingData}>Retry</Button>
+            </div>
+        );
+    }
+
+    // Derived State
+    const hasOverdue = data.past_invoices.some(inv => inv.status === "OVERDUE");
+    const isGrace = data.account_status === "GRACE";
+    const isBlocked = data.account_status === "BLOCKED";
+
+
+    return (
+        <div className={`p-8 max-w-7xl mx-auto space-y-8 ${styles.lightThemeWrapper}`}>
+
+            {/* 1. Status Banners */}
+            {isBlocked && (
+                <Alert variant="destructive" className="border-2 border-red-600 bg-red-50 dark:bg-red-900/10">
+                    <ShieldAlert className="h-5 w-5" />
+                    <AlertTitle className="text-lg font-bold">Service Suspended</AlertTitle>
+                    <AlertDescription>
+                        Your account is blocked due to an overdue payment or administrative action.
+                        API access is currently disabled. Please contact support to settle your outstanding balance.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {(isGrace || (hasOverdue && !isBlocked)) && (
+                <Alert className="border-2 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-900 dark:text-yellow-100">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    <AlertTitle className="text-lg font-bold text-yellow-700 dark:text-yellow-400">Payment Overdue</AlertTitle>
+                    <AlertDescription>
+                        Your account is in a grace period. Please settle your outstanding invoices immediately to avoid service interruption.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
+                    <p className="text-muted-foreground mt-1">Manage your NeuroRouter Pro subscription and usage.</p>
+                </div>
+                <Badge variant={isBlocked ? "destructive" : "outline"} className="text-sm px-3 py-1">
+                    Status: {data.account_status}
+                </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                {/* 2. Current Plan & Usage */}
+                <Card className="shadow-md border-t-4 border-t-primary">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-primary">Current Cycle</CardTitle>
+                                <CardDescription>{data.current_month.year_month}</CardDescription>
+                            </div>
+                            <Badge variant="secondary" className="bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20">
+                                <Activity className="w-3 h-3 mr-1" /> Live Tracking
+                            </Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+
+                        {/* Costs Breakdown */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
+                                <p className="text-xs font-medium text-primary/70 uppercase">Fixed Fee (Monthly)</p>
+                                <p className="text-2xl font-bold mt-1 text-primary">₹{data.current_month.fixed_fee_inr.toLocaleString()}</p>
+                            </div>
+                            <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
+                                <p className="text-xs font-medium text-primary/70 uppercase">Variable Usage (Est.)</p>
+                                <p className="text-2xl font-bold mt-1 text-secondary">${data.current_month.estimated_variable_usd.toFixed(2)}</p>
+                            </div>
+                        </div>
+
+                        <Separator />
+
+                        {/* Token Usage Stats */}
+                        <div className="space-y-6">
+
+                            {/* Input Tokens */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 bg-primary/10 rounded text-primary border border-primary/20">
+                                            <FileText className="h-3 w-3" />
+                                        </div>
+                                        <span className="font-medium text-slate-700">Input Tokens</span>
+                                    </div>
+                                    <span className="text-slate-500">
+                                        {data.current_month.input_tokens > 1_000_000 ? (
+                                            <span className="text-red-600 font-medium">Over Quota</span>
+                                        ) : (
+                                            <span className="text-green-600 font-medium">Within Quota</span>
+                                        )}
+                                    </span>
+                                </div>
+                                <Progress value={Math.min((data.current_month.input_tokens / 1_000_000) * 100, 100)} className="h-2" />
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>{data.current_month.input_tokens.toLocaleString()} / 1,000,000 included</span>
+                                    <span>{((data.current_month.input_tokens / 1_000_000) * 100).toFixed(0)}%</span>
+                                </div>
+                                {data.current_month.input_tokens > 1_000_000 && (
+                                    <p className="text-xs text-red-600 mt-1">
+                                        Charging $2.00/1M for {(data.current_month.input_tokens - 1_000_000).toLocaleString()} excess tokens.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Output Tokens */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 bg-secondary/10 rounded text-secondary border border-secondary/20">
+                                            <FileText className="h-3 w-3" />
+                                        </div>
+                                        <span className="font-medium text-slate-700">Output Tokens</span>
+                                    </div>
+                                    <span className="text-slate-500">
+                                        {data.current_month.output_tokens > 1_000_000 ? (
+                                            <span className="text-red-600 font-medium">Over Quota</span>
+                                        ) : (
+                                            <span className="text-green-600 font-medium">Within Quota</span>
+                                        )}
+                                    </span>
+                                </div>
+                                <Progress value={Math.min((data.current_month.output_tokens / 1_000_000) * 100, 100)} className="h-2" />
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>{data.current_month.output_tokens.toLocaleString()} / 1,000,000 included</span>
+                                    <span>{((data.current_month.output_tokens / 1_000_000) * 100).toFixed(0)}%</span>
+                                </div>
+                                {data.current_month.output_tokens > 1_000_000 && (
+                                    <p className="text-xs text-red-600 mt-1">
+                                        Charging $8.00/1M for {(data.current_month.output_tokens - 1_000_000).toLocaleString()} excess tokens.
+                                    </p>
+                                )}
+                            </div>
+
+                        </div>
+
+                        <div className="pt-4 mt-2 bg-slate-50 -mx-6 -mb-6 px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+                            <span className="font-semibold text-slate-600">Estimated Total</span>
+                            <span className="text-xl font-bold tracking-tight text-slate-900">{data.current_month.total_display}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 3. Rate Card & Info */}
+                <div className="space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>NeuroRouter Pro Plan</CardTitle>
+                            <CardDescription>Your active infrastructure plan.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm">
+                            <div className="flex justify-between py-2 border-b">
+                                <span>Infrastructure Fee</span>
+                                <span className="font-medium">₹1,599 / mo</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b">
+                                <span>Llama 3.3 70B Input</span>
+                                <span className="font-medium">$2.00 / 1M tokens</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b">
+                                <span>Llama 3.3 70B Output</span>
+                                <span className="font-medium">$8.00 / 1M tokens</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                                <span>Billing Cycle</span>
+                                <span className="font-medium">Monthly (1st - End)</span>
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <p className="text-xs text-muted-foreground italic">
+                                Bills are generated on the 1st of each month. Payment is due by the 5th.
+                            </p>
+                        </CardFooter>
+                    </Card>
+
+                    {/* Quick Actions (Mock) */}
+                    <Card className="bg-white border shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-slate-900">Need Help?</CardTitle>
+                            <CardDescription className="text-slate-500">Contact support for billing inquiries or custom enterprise plans.</CardDescription>
+                        </CardHeader>
+                        <CardFooter>
+                            <Button variant="outline" className="w-full">Contact Support</Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            </div>
+
+            {/* 4. Invoice History */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Invoice History</CardTitle>
+                    <CardDescription>View your past monthly statements.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-md border">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-muted/50 text-muted-foreground font-medium">
+                                <tr>
+                                    <th className="p-4">Invoice #</th>
+                                    <th className="p-4">Month</th>
+                                    <th className="p-4">Amount</th>
+                                    <th className="p-4">Due Date</th>
+                                    <th className="p-4">Status</th>
+                                    <th className="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.past_invoices.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                            No invoices generated yet.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    data.past_invoices.map((inv) => (
+                                        <tr key={inv.invoice_number} className="border-t hover:bg-muted/50 transition-colors">
+                                            <td className="p-4 font-medium">{inv.invoice_number}</td>
+                                            <td className="p-4">{inv.year_month}</td>
+                                            <td className="p-4 font-mono">{inv.calculated_costs.total_due_display}</td>
+                                            <td className="p-4 text-muted-foreground">{new Date(inv.due_date).toLocaleDateString()}</td>
+                                            <td className="p-4">
+                                                <Badge variant={getStatusBadgeVar(inv.status) as any}>{inv.status}</Badge>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <Button variant="ghost" size="sm" className="h-8">Details</Button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+            </Card>
+
+        </div>
+    );
+}

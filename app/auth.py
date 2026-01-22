@@ -11,6 +11,8 @@ from passlib.context import CryptContext
 
 from .config import settings
 from .models import ApiKey, User
+from .config import settings
+from .models import ApiKey, User
 
 # -------------------------------------------------------------------
 # Password hashing
@@ -73,6 +75,24 @@ async def get_current_user(
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
 
+    return user
+
+
+async def get_current_admin(
+    user: User = Depends(get_current_user),
+) -> User:
+    if not settings.admin_emails:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Admin access not configured"
+        )
+    
+    admin_list = [e.strip().lower() for e in settings.admin_emails.split(",")]
+    if user.email.lower() not in admin_list:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized as admin"
+        )
     return user
 
 
@@ -160,6 +180,10 @@ async def verify_api_key(
     user = await User.get(ObjectId(api_key.user_id))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Invalid API key owner")
+
+    # Strict Billing Enforcement (Global)
+    from .billing_utils import check_billing_access
+    await check_billing_access(user)
 
     # Update last used timestamp
     api_key.last_used_at = datetime.utcnow()

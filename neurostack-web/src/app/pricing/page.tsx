@@ -22,11 +22,13 @@ const plans = [
         price: "₹1,599",
         description: "For startups and growing teams.",
         features: [
+            "Core infrastructure access",
             "Access to all routable LLM models",
-            "1M input tokens / month",
-            "1M output tokens / month",
+            "1M input tokens / month included",
+            "1M output tokens / month included",
             "Post-quota: Input $2 / 1M tokens",
             "Post-quota: Output $8 / 1M tokens",
+            "Overage calculated monthly",
         ],
         highlight: true,
         cta: "Upgrade",
@@ -36,7 +38,7 @@ const plans = [
         name: "Enterprise",
         price: "Custom",
         description: "Built for high-scale teams",
-        features: ["Dedicated support & custom limits"],
+        features: ["Custom pricing", "Dedicated support & custom limits"],
         cta: "Contact Sales",
         href: "/contact",
     },
@@ -103,15 +105,15 @@ export default function PricingPage() {
 
                 <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center border-t border-slate-100 pt-8">
                     <div className="text-sm text-muted-foreground">
-                        <span className="font-medium text-slate-900 block mb-1">Real-time Usage</span>
-                        Track token usage in real-time
+                        <span className="font-medium text-slate-900 block mb-1">Clear Token Counters</span>
+                        Clear token usage counters
                     </div>
                     <div className="text-sm text-muted-foreground">
-                        <span className="font-medium text-slate-900 block mb-1">Cost Breakdown</span>
-                        Monthly usage & cost breakdown dashboard
+                        <span className="font-medium text-slate-900 block mb-1">Usage & Cost Breakdown</span>
+                        Usage and cost breakdown dashboard
                     </div>
                     <div className="text-sm text-muted-foreground">
-                        <span className="font-medium text-slate-900 block mb-1">No Auto-Debit</span>
+                        <span className="font-medium text-slate-900 block mb-1">No Auto-Collection</span>
                         No automated payment collection
                     </div>
                 </div>

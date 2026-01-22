@@ -15,6 +15,7 @@ export interface DashboardOverview {
     total_tokens: number
     total_requests: number
     active_keys: number
+    account_status: string
     recent_activity: ActivityItem[]
 }
 

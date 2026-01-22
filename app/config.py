@@ -31,6 +31,9 @@ class Settings(BaseSettings):
 
     # CORS
     cors_allow_origins: str = Field("*", env="CORS_ALLOW_ORIGINS")
+    
+    # Admin
+    admin_emails: str = Field("", env="ADMIN_EMAILS")
 
     class Config:
         env_file = ".env"

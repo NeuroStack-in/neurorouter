@@ -1,6 +1,6 @@
 "use client"
 
-import { Activity, Clock, CreditCard, Key, TrendingUp, Zap } from "lucide-react"
+import { Activity, Clock, CreditCard, Key, TrendingUp, Zap, CheckCircle } from "lucide-react"
 import styles from "./dashboard.module.css"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
@@ -32,6 +32,8 @@ export default function DashboardPage() {
         fetchDashboard()
     }, [])
 
+    console.log("DASHBOARD DATA:", data); // DEBUG LOG
+
     if (loading) {
         return ( // Simple skeleton
             <div className={styles.container}>
@@ -43,6 +45,22 @@ export default function DashboardPage() {
                     {[1, 2, 3].map(i => (
                         <div key={i} className="h-40 bg-slate-50 rounded-xl animate-pulse"></div>
                     ))}
+                </div>
+            </div>
+        )
+    }
+
+    if (data?.account_status === "PENDING_APPROVAL") {
+        return (
+            <div className={styles.container}>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center max-w-lg mx-auto">
+                    <div className="p-4 bg-yellow-50 rounded-full mb-6">
+                        <Clock className="h-12 w-12 text-yellow-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Account Pending Approval</h2>
+                    <p className="text-slate-600 mb-6">
+                        Your account is currently under review. You will receive access to the dashboard and API keys once an admin approves your request.
+                    </p>
                 </div>
             </div>
         )

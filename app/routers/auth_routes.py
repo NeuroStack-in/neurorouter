@@ -10,7 +10,7 @@ from ..auth import (
     hash_password,
 )
 # Removed get_db dependency
-from ..models import ApiKey, User
+from ..models import ApiKey, User, AccountStatus
 from ..google_auth import verify_google_token
 
 router = APIRouter(tags=["Auth"])
@@ -34,6 +34,7 @@ async def register_user(payload: schemas.UserCreate):
         email=payload.email.lower(),
         full_name=payload.full_name,
         password_hash=hash_password(payload.password),
+        account_status=AccountStatus.PENDING_APPROVAL, # Default to Pending
     )
     await user.insert()
     return schemas.UserOut(
@@ -44,6 +45,8 @@ async def register_user(payload: schemas.UserCreate):
     )
 
 
+from ..billing_utils import refresh_user_billing_status
+
 @router.post("/auth/login", response_model=schemas.TokenResponse)
 async def login(payload: schemas.UserCreate):
     user = await authenticate_user(payload.email, payload.password)
@@ -52,6 +55,9 @@ async def login(payload: schemas.UserCreate):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
+    
+    # Check Billing Status on Login
+    await refresh_user_billing_status(user)
 
     token = create_access_token(subject=str(user.id))
 
@@ -90,8 +96,12 @@ async def login_google(payload: schemas.GoogleAuthRequest):
             google_id=sub,
             auth_provider="google",
             password_hash=None,
+            account_status=AccountStatus.PENDING_APPROVAL,
         )
         await user.insert()
+
+    # Check Billing Status on Login
+    await refresh_user_billing_status(user)
 
     token = create_access_token(subject=str(user.id))
     return schemas.TokenResponse(
