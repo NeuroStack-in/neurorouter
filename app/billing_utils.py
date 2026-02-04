@@ -1,6 +1,8 @@
-from datetime import datetime
+from datetime import datetime,timedelta
 from decimal import Decimal
 from typing import Tuple, Optional
+from app.models import BillingCycle
+
 
 from fastapi import HTTPException, status
 
@@ -45,10 +47,11 @@ async def refresh_user_billing_status(user: User) -> AccountStatus:
     
     # 1. Fetch all unpaid invoices (PENDING or OVERDUE)
     unpaid_invoices = await BillingCycle.find(
-        BillingCycle.user_id == str(user.id),
-        BillingCycle.status != BillingStatus.PAID,
-        BillingCycle.status != BillingStatus.VOID
-    ).to_list()
+    BillingCycle.user_id == str(user.id),
+    BillingCycle.status != BillingStatus.PAID,
+    BillingCycle.status != BillingStatus.VOID
+).to_list()
+
     
     should_be_blocked = False
     should_be_grace = False
@@ -102,38 +105,51 @@ async def refresh_user_billing_status(user: User) -> AccountStatus:
 async def check_billing_access(user: User):
     """
     Strict enforcement of billing status.
-    Refreshes status first to ensure real-time enforcement.
+    Runs on every API request.
     """
-    # 1. Refresh Status based on time
-    # This ensures "Logic must run on API request" rule.
+
     current_status = await refresh_user_billing_status(user)
-    
-    # 2. Blocked User -> 403 Forbidden
-    if current_status == AccountStatus.BLOCKED:
-        # Check WHY (fetch invoice)
-        overdue = await BillingCycle.find_one(
-            BillingCycle.user_id == str(user.id),
-            BillingCycle.status == BillingStatus.OVERDUE
-        )
-        msg = "Account is blocked."
-        code = status.HTTP_403_FORBIDDEN
-        
-        if overdue:
-            msg = f"Billing suspension. Invoice {overdue.invoice_number} is overdue."
-            code = status.HTTP_402_PAYMENT_REQUIRED
-            
-        raise HTTPException(status_code=code, detail=msg)
-    
-    # 3. Pending Approval Check
+
+    now = datetime.utcnow()
+
+    # Find latest unpaid invoice
+    invoice = await BillingCycle.find_one(
+    BillingCycle.user_id == str(user.id),
+    BillingCycle.status != BillingStatus.PAID,
+    BillingCycle.status != BillingStatus.VOID
+)
+
+
+    # 🚫 BLOCK after grace period
+    if invoice and now > invoice.grace_period_end:
+        raise HTTPException(
+    status_code=402,
+    detail={
+        "type": "blocked",
+        "message": f"Invoice {invoice.invoice_number} overdue. Account blocked.",
+        "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
+        "grace_period_end": invoice.grace_period_end.isoformat() if invoice.grace_period_end else None
+    }
+)
+
+    # ⚠️ WARNING between due date & grace period
+    if invoice and now > invoice.due_date and now <= invoice.grace_period_end:
+        return {
+            "warning": True,
+            "message": f"Invoice {invoice.invoice_number} is past due date.",
+            "due_date": invoice.due_date,
+            "grace_period_end": invoice.grace_period_end
+        }
+
+    # Pending approval
     if current_status == AccountStatus.PENDING_APPROVAL:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Account pending approval."
         )
-    
-    # 3. Grace Period Warning?
-    # We allow access.
-    return True
+
+    return {"warning": False}
+
 
 from io import BytesIO
 try:
@@ -219,3 +235,42 @@ def generate_invoice_pdf(invoice: BillingCycle, user: User) -> BytesIO:
     c.save()
     buffer.seek(0)
     return buffer
+
+
+async def enforce_billing(user: User):
+
+    now = datetime.utcnow()
+
+    invoice = await BillingCycle.find_one(
+    BillingCycle.user_id == str(user.id),
+    BillingCycle.status != BillingStatus.PAID,
+    BillingCycle.status != BillingStatus.VOID
+)
+
+
+    if not invoice:
+        return  # allow if no unpaid invoice
+
+    # BLOCK after grace period
+    if now > invoice.grace_period_end:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "type": "blocked",
+                "message": f"Invoice {invoice.invoice_number} overdue. Account blocked.",
+                "due_date": invoice.due_date.isoformat(),
+                "grace_period_end": invoice.grace_period_end.isoformat()
+            }
+        )
+
+    # WARNING between due date and grace period
+    if now > invoice.due_date and now <= invoice.grace_period_end:
+        return {
+            "warning": True,
+            "message": f"Invoice {invoice.invoice_number} is past due date.",
+            "due_date": invoice.due_date,
+            "grace_period_end": invoice.grace_period_end
+        }
+
+    return {"warning": False}
+

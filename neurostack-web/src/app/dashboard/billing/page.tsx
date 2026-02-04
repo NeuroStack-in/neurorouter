@@ -134,14 +134,16 @@ export default function BillingPage() {
             )}
 
             {(isGrace || (hasOverdue && !isBlocked)) && (
-                <Alert className="border-2 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-900 dark:text-yellow-100">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                    <AlertTitle className="text-lg font-bold text-yellow-700 dark:text-yellow-400">Payment Overdue</AlertTitle>
-                    <AlertDescription>
-                        Your account is in a grace period. Please settle your outstanding invoices immediately to avoid service interruption.
-                    </AlertDescription>
-                </Alert>
-            )}
+  <Alert className="border-2 border-yellow-700 bg-yellow-200 text-yellow-900 dark:bg-yellow-800 dark:text-yellow-100 font-semibold">
+    <AlertTriangle className="h-5 w-5 text-yellow-900 dark:text-yellow-100" />
+    <AlertTitle className="text-lg font-bold text-yellow-900 dark:text-yellow-100">
+      Payment Overdue
+    </AlertTitle>
+    <AlertDescription className="text-yellow-900 dark:text-yellow-100">
+      Your account is in a grace period. Please settle your outstanding invoices immediately to avoid service interruption.
+    </AlertDescription>
+  </Alert>
+)}
 
             <div className="flex justify-between items-center">
                 <div>

@@ -78,7 +78,7 @@ async def get_current_user(
     return user
 
 
-async def get_current_admin(
+"""async def get_current_admin(
     user: User = Depends(get_current_user),
 ) -> User:
     if not settings.admin_emails:
@@ -93,7 +93,26 @@ async def get_current_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized as admin"
         )
+    return user"""
+
+async def get_current_admin(user: User = Depends(get_current_user)):
+    if not settings.admin_emails:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access not configured"
+        )
+
+    admin_list = [e.strip().lower() for e in settings.admin_emails.split(",")]
+
+    if user.email.lower() not in admin_list:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized as admin"
+        )
+
     return user
+
+
 
 
 async def authenticate_user(email: str, password: str) -> Optional[User]:

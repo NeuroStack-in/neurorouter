@@ -58,7 +58,8 @@ async def login(payload: schemas.UserCreate):
     
     # Check Billing Status on Login
     await refresh_user_billing_status(user)
-
+    from ..billing_utils import check_billing_access
+    await check_billing_access(user)
     token = create_access_token(subject=str(user.id))
 
     return schemas.TokenResponse(

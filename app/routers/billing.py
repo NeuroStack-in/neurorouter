@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from typing import List, Optional
 from decimal import Decimal
 
@@ -130,12 +131,14 @@ class AdminUserBillingSummary(BaseModel):
     last_invoice_status: Optional[BillingStatus]
 
 # --- User Endpoints ---
+from ..billing_utils import check_billing_access
 
 @router.get("/me", response_model=BillingDashboardResponse)
 async def get_my_billing(user: User = Depends(get_current_user)):
     """
     Get current user's billing dashboard data.
     """
+    await check_billing_access(user)
     current_month = datetime.utcnow().strftime("%Y-%m")
     
     # Fetch live usage
@@ -299,8 +302,8 @@ async def generate_invoice_manually(
         start_date=datetime.utcnow(), # Placeholder, ideally strictly calculation start
         end_date=datetime.utcnow(),   # Placeholder
         status=BillingStatus.PENDING,
-        due_date=datetime.utcnow(),   # Need to add + X days logic
-        grace_period_end=datetime.utcnow(), 
+        due_date=datetime.utcnow() + timedelta(days=7),
+grace_period_end=datetime.utcnow() + timedelta(days=10),
         snapshot_data=snapshot,
         calculated_costs=costs
     )
