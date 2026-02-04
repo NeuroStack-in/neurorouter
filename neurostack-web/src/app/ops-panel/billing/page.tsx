@@ -65,7 +65,7 @@ export default function AdminBillingPage() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://gaurikapare-neurorouter-backend.hf.space'}/billing/admin/users`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -82,7 +82,7 @@ export default function AdminBillingPage() {
         setBillingLoading(true);
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${userId}/billing`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://gaurikapare-neurorouter-backend.hf.space:'}/billing/admin/users/${userId}/billing`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -105,7 +105,7 @@ export default function AdminBillingPage() {
     const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pdf`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://gaurikapare-neurorouter-backend.hf.space'}/billing/admin/invoices/${invoiceId}/pdf`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to download PDF");
@@ -129,7 +129,7 @@ export default function AdminBillingPage() {
         const token = localStorage.getItem("jwt");
         try {
             // Correct endpoint is POST /admin/invoices/{id}/pay
-            const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pay`;
+            const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://gaurikapare-neurorouter-backend.hf.space'}/billing/admin/invoices/${invoiceId}/pay`;
             const res = await fetch(url, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
@@ -155,7 +155,7 @@ export default function AdminBillingPage() {
 
     const handleAction = async (action: string, payload: any) => {
         const token = localStorage.getItem("jwt");
-        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/status`;
+        let url = `${process.env.NEXT_PUBLIC_API_URL || 'https://gaurikapare-neurorouter-backend.hf.space'}/billing/admin/users/${selectedUser?.user_id}/status`;
         let body: any = {};
 
         if (action === "BLOCK") {
@@ -164,7 +164,7 @@ export default function AdminBillingPage() {
             body = { status: "ACTIVE", reason: "Manual Admin Activation" };
         } else if (action === "APPROVE") {
             // Different endpoint for approval
-            url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/approve`;
+            url = `${process.env.NEXT_PUBLIC_API_URL || 'https://gaurikapare-neurorouter-backend.hf.space'}/billing/admin/users/${selectedUser?.user_id}/approve`;
             body = { groq_api_key: approvalKey };
         }
 

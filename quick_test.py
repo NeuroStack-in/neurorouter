@@ -4,6 +4,8 @@ Quick test to check if proxy is responding
 import requests
 import os
 
+BASE_URL = "https://gaurikapare-neurorouter-backend.hf.space"
+
 print("Testing proxy server...")
 
 API_KEY = os.getenv("NEUROSTACK_API_KEY")
@@ -11,52 +13,47 @@ if not API_KEY:
     print("Set NEUROSTACK_API_KEY env var to a valid key generated via /api-keys.")
     raise SystemExit(1)
 
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
 try:
     # Test 1: Health check
     print("\n1. Testing health endpoint...")
-    response = requests.get("http://localhost:7860/healthz", timeout=5)
-    print(f"   Status: {response.status_code}")
-    print(f"   Response: {response.json()}")
-    
+    response = requests.get(f"{BASE_URL}/healthz", timeout=10)
+    print(f"Status: {response.status_code}")
+    print(f"Response: {response.json()}")
+
     # Test 2: Root endpoint
     print("\n2. Testing root endpoint...")
-    response = requests.get("http://localhost:7860/", timeout=5)
-    print(f"   Status: {response.status_code}")
-    print(f"   Response: {response.json()}")
-    
-    # Test 3: Simple API call
+    response = requests.get(f"{BASE_URL}/", timeout=10)
+    print(f"Status: {response.status_code}")
+    print(f"Response: {response.json()}")
+
+    # Test 3: Chat endpoint
     print("\n3. Testing chat endpoint...")
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
     payload = {
         "model": "gpt-4o-mini",
         "messages": [{"role": "user", "content": "Say hi"}],
         "max_tokens": 10
     }
+
     response = requests.post(
-        "http://localhost:7860/v1/chat/completions",
+        f"{BASE_URL}/v1/chat/completions",
         headers=headers,
         json=payload,
-        timeout=30
+        timeout=20
     )
-    print(f"   Status: {response.status_code}")
-    if response.status_code == 200:
-        data = response.json()
-        print(f"   Response: {data['choices'][0]['message']['content']}")
-    else:
-        print(f"   Error: {response.text}")
-    
+
+    print(f"Status: {response.status_code}")
+    print(f"Response: {response.json()}")
+
     print("\n✅ Proxy is working!")
-    
+
 except requests.exceptions.ConnectionError:
     print("\n❌ ERROR: Cannot connect to server!")
-    print("   Make sure the server is running:")
-    print("   conda activate mcc-project")
-    print("   python run.py")
 except requests.exceptions.Timeout:
     print("\n❌ ERROR: Request timed out!")
-    print("   The server might be slow or hanging.")
 except Exception as e:
     print(f"\n❌ ERROR: {e}")

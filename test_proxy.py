@@ -6,7 +6,7 @@ import json
 import os
 
 # Configuration
-BASE_URL = "http://localhost:7860"
+BASE_URL = "https://gaurikapare-neurorouter-backend.hf.space"
 API_KEY = os.getenv("NEUROSTACK_API_KEY")  # Set to a valid key from /api-keys
 
 if not API_KEY:

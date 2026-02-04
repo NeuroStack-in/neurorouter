@@ -63,7 +63,7 @@ export default function BillingPage() {
             const token = localStorage.getItem("jwt");
             if (!token) throw new Error("Not authenticated");
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/me`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://gaurikapare-neurorouter-backend.hf.space'}/billing/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
