@@ -31,12 +31,11 @@ if settings.cors_allow_origins:
 
 # Local dev
 origins.extend([
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "https://neurostack-web.vercel.app"
 ])
 
 # Production frontend (Render)
-PRODUCTION_FRONTEND = "https://router-neurostack-in.onrender.com"
+PRODUCTION_FRONTEND = "https://neurostack-web.vercel.app"
 if PRODUCTION_FRONTEND not in origins:
     origins.append(PRODUCTION_FRONTEND)
 

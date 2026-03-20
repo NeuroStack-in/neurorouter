@@ -22,7 +22,7 @@ import styles from "./auth.module.css"
 
 type AuthView = "login" | "register"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:7860"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://gaurikapare-neurorouter-backend.hf.space"
 
 export default function AuthPage() {
     const router = useRouter()
@@ -126,29 +126,41 @@ export default function AuthPage() {
                 }),
             })
 
-            if (!loginRes.ok) {
-                let msg = "Authentication failed. Please try again."
-                try {
-                    const data = await loginRes.json()
-                    if (data?.detail) msg = data.detail
-                } catch (err) {
-                    // keep default
-                }
-                throw new Error(msg)
-            }
+           if (!loginRes.ok) {
+  const data = await loginRes.json();
 
-            const data = await loginRes.json()
-            const token = data?.access_token
-            if (!token) throw new Error("Missing access token")
+  const msg =
+    data?.detail?.message ||
+    data?.detail ||
+    "Payment required. Account blocked.";
 
-            localStorage.setItem("jwt", token)
-            router.push("/dashboard")
+  throw new Error(msg);
+}
+
+           const data = await loginRes.json()
+
+// 🔔 Handle billing warning
+if (data?.warning) {
+  setErrors({ submit: data.message })
+}
+
+// normal login
+const token = data?.access_token
+if (!token) throw new Error("Missing access token")
+
+localStorage.setItem("jwt", token)
+router.push("/dashboard")
         } catch (error: any) {
-            const msg = error?.message || "Authentication failed. Please try again."
-            setErrors({ submit: msg })
-        } finally {
-            setLoading(false)
-        }
+  console.log("LOGIN ERROR:", error);
+
+  let msg = "Authentication failed, please try again";
+
+  if (error instanceof Error) {
+    msg = error.message;
+  }
+
+  setErrors({ submit: msg });
+}
     }
 
     const handleGoogleAuth = async (response: any) => {

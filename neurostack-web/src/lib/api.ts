@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:7860"
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 interface FetchOptions extends RequestInit {
     headers?: Record<string, string>
@@ -32,8 +32,8 @@ async function fetchWithAuth(endpoint: string, options: FetchOptions = {}) {
     }
 
     try {
-        console.log(`[API] Fetching: ${API_BASE}${endpoint}`)
-        const response = await fetch(`${API_BASE}${endpoint}`, config)
+        console.log(`[API] Fetching: ${API_URL}${endpoint}`)
+        const response = await fetch(`${API_URL}${endpoint}`, config)
 
         if (response.status === 401) {
             if (typeof window !== 'undefined') {
