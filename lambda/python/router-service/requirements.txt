@@ -1,0 +1,8 @@
+# HTTP client for making requests to AI providers (Groq, OpenAI, etc.)
+# httpx is async-capable, unlike the older 'requests' library
+httpx==0.27.2
+
+# AWS SDK — for DynamoDB and Secrets Manager
+# Note: boto3 is pre-installed in Lambda runtime, but we list it
+# for local testing. The deploy script can skip it to reduce zip size.
+boto3>=1.34.0
