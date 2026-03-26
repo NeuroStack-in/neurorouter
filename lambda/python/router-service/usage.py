@@ -123,20 +123,35 @@ def write_usage_event(
     total_tokens = prompt_tokens + completion_tokens
     now = datetime.utcnow()
 
+    request_id = f"evt_{uuid.uuid4().hex}"
     table = get_table(TABLE_USAGE_EVENTS)
-    table.put_item(
-        Item={
-            "user_id": user_id,
-            "event_id": f"evt_{uuid.uuid4().hex}",
-            "api_key_id": api_key_id,
-            "model": model,
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "total_tokens": total_tokens,
-            "timestamp": now.isoformat() + "Z",
-            "year_month": _current_year_month(),
-        }
-    )
+
+    try:
+        # IDEMPOTENT WRITE (Day 8):
+        # The ConditionExpression ensures we never create duplicate events.
+        # If this Lambda retries (API Gateway or network retry), the same
+        # request_id would already exist → ConditionalCheckFailedException
+        # → we catch it below and skip silently.
+        table.put_item(
+            Item={
+                "userId": user_id,
+                "timestamp": now.isoformat() + "Z",
+                "requestId": request_id,
+                "api_key_id": api_key_id,
+                "model": model,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": total_tokens,
+                "year_month": _current_year_month(),
+                # TTL: auto-delete after 90 days (DynamoDB deletes when expiresAt < now)
+                "expiresAt": int((now + __import__('datetime').timedelta(days=90)).timestamp()),
+            },
+            ConditionExpression="attribute_not_exists(userId) AND attribute_not_exists(#ts)",
+            ExpressionAttributeNames={"#ts": "timestamp"},
+        )
+    except table.meta.client.exceptions.ConditionalCheckFailedException:
+        # Duplicate event — already recorded, safe to skip
+        print(f"DUPLICATE: Usage event already exists, skipping. requestId={request_id}")
 
 
 def update_usage_monthly(

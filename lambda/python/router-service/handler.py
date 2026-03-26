@@ -49,6 +49,7 @@ WHAT'S IN THE 'event' (reminder):
 import asyncio
 import json
 import os
+import time
 from typing import Any, Dict, Tuple
 
 from providers.groq_adapter import GroqAdapter
@@ -56,6 +57,19 @@ from provider_adapter import ProviderError
 from secrets_client import get_secret
 from usage import record_usage
 from model_catalog import to_openai_format
+
+
+# ──────────────────────────────────────────────────────────────────
+# STRUCTURED LOGGING (Day 8)
+# ──────────────────────────────────────────────────────────────────
+
+def _log_request(log_data: dict):
+    """
+    Log structured JSON to CloudWatch for debugging and billing analysis.
+    Each request logs: userId, apiKeyId, model, stream, status,
+    input/output tokens, and total latency.
+    """
+    print(json.dumps({"event": "request_complete", **log_data}))
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -213,10 +227,11 @@ async def _handle_chat_completions(
         API Gateway response dict (statusCode + headers + body)
     """
 
+    start_time = time.time()
+
     # Check if client wants streaming
     stream = bool(body.get("stream", False))
     if stream:
-        # Streaming is Day 3 — return clear error so developer knows
         return _build_response(400, {
             "error": {
                 "message": "Streaming is not yet supported on this endpoint. "
@@ -225,50 +240,90 @@ async def _handle_chat_completions(
             }
         })
 
-    # Extract authorizer context
+    # ── Validate authorizer context (Day 8) ──
+    # If any required field is missing, return a clear error instead of
+    # a cryptic KeyError deep in the handler.
     user_id = authorizer.get("userId", "")
     api_key_id = authorizer.get("apiKeyId", "")
     plan_id = authorizer.get("planId", "")
 
-    # Capture the model the client requested (for usage tracking)
-    # Even though GroqAdapter overrides it to llama-3.3-70b, we track
-    # what the CLIENT asked for so we know demand per model
-    requested_model = body.get("model", DEFAULT_MODEL)
-
-    # Get Groq API key and call the provider
-    try:
-        # Get Groq API key from Secrets Manager
-        groq_key = _get_groq_api_key()
-
-        # Create the adapter and forward the request
-        adapter = GroqAdapter(api_key=groq_key)
-
-        # Call Groq Cloud (non-streaming)
-        # This is the equivalent of forward_to_groq() from app/proxy.py
-        response_data = await adapter.chat_completions(body, stream=False)
-
-    except ProviderError as e:
-        # Groq returned an error (4xx or 5xx)
-        # Pass through the SAME status code and error body to our caller
-        # WHY: The client should see the real error (rate limit, invalid request, etc.)
-        return _build_response(e.status_code, e.detail)
-
-    except Exception as e:
-        # Network error, missing API key, or unexpected failure
-        # Return 502 Bad Gateway — standard HTTP code for "upstream server failed"
-        return _build_response(502, {
+    if not user_id or not api_key_id:
+        return _build_response(500, {
             "error": {
-                "message": f"Failed to connect to AI provider: {str(e)}",
-                "type": "upstream_error",
+                "message": "Missing required authorizer context fields. "
+                           f"Got: userId={user_id}, apiKeyId={api_key_id}, planId={plan_id}. "
+                           "This usually means the Go authorizer is not configured correctly.",
+                "type": "authorizer_error",
             }
         })
 
+    requested_model = body.get("model", DEFAULT_MODEL)
+
+    # ── Get Groq API key and call provider with retry (Day 8) ──
+    groq_key = _get_groq_api_key()
+    key_source = "default"
+
+    # TODO: Check per-user Groq key from Secrets Manager first
+    # user_key = get_secret(f"neurorouter/users/{user_id}/groq-key", required=False)
+    # if user_key: groq_key = user_key; key_source = "user"
+    print(json.dumps({"event": "provider_key", "source": key_source, "userId": user_id}))
+
+    adapter = GroqAdapter(api_key=groq_key)
+    response_data = None
+    last_error = None
+
+    # Retry logic (Day 8): up to 3 attempts for 429/503 errors
+    for attempt in range(1, 4):
+        try:
+            response_data = await adapter.chat_completions(body, stream=False)
+            break  # Success — exit retry loop
+
+        except ProviderError as e:
+            last_error = e
+            # Only retry on 429 (rate limit) or 503 (service unavailable)
+            if e.status_code in (429, 503) and attempt < 3:
+                wait = 2 ** attempt  # Exponential backoff: 2s, 4s
+                print(json.dumps({
+                    "event": "retry", "attempt": attempt,
+                    "status": e.status_code, "wait_seconds": wait,
+                }))
+                await asyncio.sleep(wait)
+                continue
+            # Non-retryable error or final attempt — pass through
+            _log_request({
+                "userId": user_id, "apiKeyId": api_key_id,
+                "model": requested_model, "stream": False,
+                "status": e.status_code, "latencyMs": int((time.time() - start_time) * 1000),
+                "error": str(e.detail),
+            })
+            return _build_response(e.status_code, e.detail)
+
+        except Exception as e:
+            _log_request({
+                "userId": user_id, "apiKeyId": api_key_id,
+                "model": requested_model, "stream": False,
+                "status": 502, "latencyMs": int((time.time() - start_time) * 1000),
+                "error": str(e),
+            })
+            return _build_response(502, {
+                "error": {
+                    "message": f"Failed to connect to AI provider: {str(e)}",
+                    "type": "upstream_error",
+                }
+            })
+
+    if response_data is None:
+        return _build_response(last_error.status_code, last_error.detail)
+
     # Extract usage block for billing
-    # Groq's response includes: {"usage": {"prompt_tokens": 15, "completion_tokens": 42}}
     usage_block = adapter.extract_usage(response_data)
+    prompt_tokens = 0
+    completion_tokens = 0
 
     # Record usage in DynamoDB (both raw event + monthly aggregate)
     if usage_block:
+        prompt_tokens = usage_block.get("prompt_tokens", 0)
+        completion_tokens = usage_block.get("completion_tokens", 0)
         try:
             record_usage(
                 user_id=user_id,
@@ -277,13 +332,18 @@ async def _handle_chat_completions(
                 usage=usage_block,
             )
         except Exception as e:
-            # Usage recording failure should NOT break the response
-            # The client already got their AI response — we just log the error
             print(f"WARNING: Failed to record usage: {e}")
 
-    # Return the response in the same format Groq sent it
-    # This is OpenAI-compatible format — the client can't tell
-    # they're talking to Groq through our proxy
+    # ── Structured logging (Day 8) ──
+    _log_request({
+        "userId": user_id, "apiKeyId": api_key_id,
+        "model": requested_model, "stream": False,
+        "status": 200,
+        "promptTokens": prompt_tokens,
+        "completionTokens": completion_tokens,
+        "latencyMs": int((time.time() - start_time) * 1000),
+    })
+
     return _build_response(200, response_data)
 
 
