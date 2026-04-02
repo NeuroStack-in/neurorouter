@@ -96,9 +96,11 @@ export default function PricingPage() {
                             </ul>
 
                             <div className="mt-8">
-                                <Button className={cn("w-full h-10", plan.highlight ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white border border-slate-200 text-slate-900 hover:bg-slate-50")}>
-                                    {plan.cta}
-                                </Button>
+                                <a href={plan.href}>
+                                    <Button className={cn("w-full h-10", plan.highlight ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white border border-slate-200 text-slate-900 hover:bg-slate-50")}>
+                                        {plan.cta}
+                                    </Button>
+                                </a>
                             </div>
                         </div>
                     ))}

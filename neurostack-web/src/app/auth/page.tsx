@@ -215,11 +215,12 @@ export default function AuthPage() {
         setFormData({ email: "", password: "", confirmPassword: "", name: "" })
         setErrors({})
 
-        // Initialize Google Sign-In
+        // Initialize Google Sign-In (only if client ID is configured)
+        const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
         const initializeGoogle = () => {
-            if ((window as any).google) {
+            if ((window as any).google && googleClientId) {
                 (window as any).google.accounts.id.initialize({
-                    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+                    client_id: googleClientId,
                     callback: handleGoogleAuth
                 });
                 (window as any).google.accounts.id.renderButton(
