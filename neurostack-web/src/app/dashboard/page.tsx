@@ -1,6 +1,6 @@
 "use client"
 
-import { Activity, Clock, CreditCard, Key, TrendingUp, Zap, CheckCircle } from "lucide-react"
+import { Activity, Clock, CreditCard, Key, TrendingUp, Zap, CheckCircle, AlertTriangle } from "lucide-react"
 import styles from "./dashboard.module.css"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
@@ -134,6 +134,27 @@ export default function DashboardPage() {
                     <div className="absolute right-0 bottom-0 w-24 h-24 bg-gradient-to-br from-green-500/10 to-transparent rounded-tl-full -mr-4 -mb-4 transition-transform group-hover:scale-110 duration-500"></div>
                 </div>
             </div>
+
+            {/* Grace Period Banner */}
+            {data?.graceBanner?.show && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-4">
+                    <div className="p-2 bg-amber-100 rounded-lg shrink-0">
+                        <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-semibold text-amber-800">Grace Period Active</h4>
+                        <p className="text-sm text-amber-700 mt-1">
+                            {data.graceBanner.billingMessage}
+                            {data.graceBanner.daysRemaining > 0 && (
+                                <span className="font-semibold"> ({data.graceBanner.daysRemaining} days remaining)</span>
+                            )}
+                        </p>
+                        <a href="/dashboard/billing" className="text-sm font-medium text-amber-800 hover:text-amber-900 underline mt-2 inline-block">
+                            View billing details
+                        </a>
+                    </div>
+                </div>
+            )}
 
             {/* Recent Activity Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -77,7 +77,7 @@ export function Testimonials() {
                         transition={{ delay: 0.1 }}
                         className="text-slate-600 text-lg max-w-2xl mx-auto"
                     >
-                        Join thousands of developers building the future of AI with NeuroStack.
+                        Join thousands of developers building the future of AI with NeuroRouter.
                     </motion.p>
                 </div>
 

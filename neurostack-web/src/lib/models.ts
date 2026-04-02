@@ -8,7 +8,7 @@ export interface Model {
     description?: string
 
     // Explicit infrastructure label for UI safety
-    infrastructure: "Self-Hosted in NeuroStack Infra"
+    infrastructure: string
 }
 
 export interface ModelMetadata {
@@ -79,43 +79,66 @@ const FALLBACK_MODELS = [
  * Public model fetch for Docs / frontend display.
  * No authentication required.
  */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:7860"
+
+/**
+ * Public model fetch for Docs / frontend display.
+ * Tries /config/models (Go config-service) first, then /v1/models fallback.
+ */
 export const fetchModels = async (): Promise<Model[]> => {
+    // Try the Go config-service first
     try {
-        const res = await fetch(
-            "https://neurostack-backend.onrender.com/v1/models",
-            { cache: "no-store" } // Ensure fresh data if possible
-        )
-
+        const res = await fetch(`${API_URL}/config/models`, { cache: "no-store" })
         if (res.ok) {
-            const json = await res.json()
-
-            if (Array.isArray(json.data)) {
-                return json.data
-                    .map((model: any) => {
-                        const meta = MODEL_METADATA[model.id]
-
-                        return {
-                            ...model,
-                            context_window: model.context_window ?? meta?.context_window,
-                            // Support both field names from backend or user data
-                            max_output_tokens: model.max_output_tokens ?? model.max_completion_tokens ?? meta?.max_output_tokens,
-                            description: meta?.description,
-                            infrastructure: "Self-Hosted in NeuroStack Infra"
-                        }
-                    })
-                    .sort((a: Model, b: Model) => a.id.localeCompare(b.id))
+            const models = await res.json()
+            if (Array.isArray(models)) {
+                return models.map((model: any) => {
+                    const meta = MODEL_METADATA[model.id]
+                    return {
+                        id: model.id,
+                        object: "model",
+                        created: 1700000000,
+                        owned_by: model.provider,
+                        context_window: meta?.context_window,
+                        max_output_tokens: meta?.max_output_tokens,
+                        description: meta?.description || model.display_name,
+                        infrastructure: "Self-Hosted in NeuroRouter Infra"
+                    }
+                }).sort((a: Model, b: Model) => a.id.localeCompare(b.id))
             }
         }
     } catch (error) {
-        console.error("Failed to fetch models:", error)
+        console.error("Failed to fetch from /config/models:", error)
     }
 
-    // Final fallback (safe for docs)
+    // Fallback to /v1/models
+    try {
+        const res = await fetch(`${API_URL}/v1/models`, { cache: "no-store" })
+        if (res.ok) {
+            const json = await res.json()
+            if (Array.isArray(json.data)) {
+                return json.data.map((model: any) => {
+                    const meta = MODEL_METADATA[model.id]
+                    return {
+                        ...model,
+                        context_window: model.context_window ?? meta?.context_window,
+                        max_output_tokens: model.max_output_tokens ?? model.max_completion_tokens ?? meta?.max_output_tokens,
+                        description: meta?.description,
+                        infrastructure: "Self-Hosted in NeuroRouter Infra"
+                    }
+                }).sort((a: Model, b: Model) => a.id.localeCompare(b.id))
+            }
+        }
+    } catch (error) {
+        console.error("Failed to fetch from /v1/models:", error)
+    }
+
+    // Final fallback
     console.warn("Using fallback model list for Docs display.")
     return FALLBACK_MODELS.map((model) => ({
         ...model,
-        max_output_tokens: model.max_completion_tokens, // Map user JSON field to interface
+        max_output_tokens: model.max_completion_tokens,
         description: MODEL_METADATA[model.id]?.description,
-        infrastructure: "Self-Hosted in NeuroStack Infra"
+        infrastructure: "Self-Hosted in NeuroRouter Infra"
     }))
 }

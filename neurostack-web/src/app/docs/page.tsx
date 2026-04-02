@@ -98,7 +98,7 @@ export default async function DocsPage() {
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
                                                 <ShieldCheck className="w-3 h-3 mr-1" />
-                                                Self-Hosted in NeuroStack Infra
+                                                Self-Hosted in NeuroRouter Infra
                                             </div>
                                         </div>
 

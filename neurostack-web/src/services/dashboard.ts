@@ -10,6 +10,12 @@ export interface ActivityItem {
     color: string
 }
 
+export interface GraceBanner {
+    show: boolean
+    daysRemaining: number
+    billingMessage: string
+}
+
 export interface DashboardOverview {
     user_name?: string
     total_tokens: number
@@ -17,6 +23,7 @@ export interface DashboardOverview {
     active_keys: number
     account_status: string
     recent_activity: ActivityItem[]
+    graceBanner: GraceBanner
 }
 
 export const dashboardService = {

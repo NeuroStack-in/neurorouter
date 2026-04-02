@@ -43,7 +43,7 @@ export function HowItWorks() {
                     {/* Arrow 1 */}
                     <ConnectionArrow delay={0.2} />
 
-                    {/* Step 2: NeuroStack */}
+                    {/* Step 2: NeuroRouter */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         whileInView={{ opacity: 1, scale: 1 }}
@@ -83,7 +83,7 @@ export function HowItWorks() {
                     <StepCard
                         icon={<Cpu className="h-8 w-8 text-orange-600" />}
                         title="Self-Hosted LLMs"
-                        description="NeuroStack Infra. No requests are forwarded to  external providers."
+                        description="NeuroRouter Infra. No requests are forwarded to  external providers."
                         delay={0.6}
                         color="orange"
                     />

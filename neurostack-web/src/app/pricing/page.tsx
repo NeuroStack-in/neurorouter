@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check } from "lucide-react"
@@ -58,7 +59,7 @@ export default function PricingPage() {
                         <p className="font-medium text-slate-900 mb-1">
                             Pricing includes access to all self-hosted LLMs available in NeuroRouter.
                         </p>
-                        Token usage is measured internally based on actual inference performed within NeuroStack infrastructure.
+                        Token usage is measured internally based on actual inference performed within NeuroRouter infrastructure.
                         <br />
                         <span className="text-xs text-slate-400 mt-2 block">
                             NeuroRouter does not resell Groq Cloud services.

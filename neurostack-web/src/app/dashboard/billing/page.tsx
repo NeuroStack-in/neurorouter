@@ -31,20 +31,42 @@ interface CurrentUsage {
 }
 
 interface BillingCycle {
+    id: string;
     invoice_number: string;
     year_month: string;
     status: "PENDING" | "PAID" | "OVERDUE" | "VOID";
     due_date: string;
     grace_period_end: string;
-    calculated_costs: {
+    total_input_tokens?: number;
+    total_output_tokens?: number;
+    fixed_fee_inr?: number;
+    variable_cost_usd?: number;
+    total_due_display: string;
+    // Legacy nested shape fallback
+    calculated_costs?: {
         total_due_display: string;
     };
 }
 
+interface CurrentPlan {
+    planId: string;
+    name: string;
+    monthlyFee: number;
+    currency: string;
+}
+
+interface GraceBanner {
+    show: boolean;
+    daysRemaining: number;
+    billingMessage: string;
+}
+
 interface BillingDashboardData {
     current_month: CurrentUsage;
+    current_plan?: CurrentPlan;
     past_invoices: BillingCycle[];
     account_status: "ACTIVE" | "GRACE" | "BLOCKED" | "PENDING_APPROVAL";
+    graceBanner: GraceBanner;
 }
 
 // --- Component ---
@@ -53,6 +75,33 @@ export default function BillingPage() {
     const [data, setData] = useState<BillingDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<BillingCycle | null>(null);
+    const [downloading, setDownloading] = useState<string | null>(null);
+
+    const handleDownloadPDF = async (invoiceId: string) => {
+        setDownloading(invoiceId);
+        try {
+            const token = localStorage.getItem("jwt");
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/invoices/${invoiceId}/download`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+                const result = await res.json();
+                if (result.download_url) {
+                    window.open(result.download_url, "_blank");
+                }
+            }
+        } catch (err) {
+            console.error("PDF download failed:", err);
+        } finally {
+            setDownloading(null);
+        }
+    };
+
+    const getInvoiceTotal = (inv: BillingCycle) => {
+        return inv.total_due_display || inv.calculated_costs?.total_due_display || "N/A";
+    };
 
     useEffect(() => {
         fetchBillingData();
@@ -258,7 +307,7 @@ export default function BillingPage() {
                 <div className="space-y-8">
                     <Card>
                         <CardHeader>
-                            <CardTitle>NeuroRouter Pro Plan</CardTitle>
+                            <CardTitle>NeuroRouter {data.current_plan?.name || "Pro"} Plan</CardTitle>
                             <CardDescription>Your active infrastructure plan.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm">
@@ -327,16 +376,22 @@ export default function BillingPage() {
                                     </tr>
                                 ) : (
                                     data.past_invoices.map((inv) => (
-                                        <tr key={inv.invoice_number} className="border-t hover:bg-muted/50 transition-colors">
+                                        <tr key={inv.invoice_number || inv.id} className="border-t hover:bg-muted/50 transition-colors">
                                             <td className="p-4 font-medium">{inv.invoice_number}</td>
                                             <td className="p-4">{inv.year_month}</td>
-                                            <td className="p-4 font-mono">{inv.calculated_costs.total_due_display}</td>
+                                            <td className="p-4 font-mono">{getInvoiceTotal(inv)}</td>
                                             <td className="p-4 text-muted-foreground">{new Date(inv.due_date).toLocaleDateString()}</td>
                                             <td className="p-4">
                                                 <Badge variant={getStatusBadgeVar(inv.status) as any}>{inv.status}</Badge>
                                             </td>
-                                            <td className="p-4 text-right">
-                                                <Button variant="ghost" size="sm" className="h-8">Details</Button>
+                                            <td className="p-4 text-right space-x-2">
+                                                <Button variant="ghost" size="sm" className="h-8" onClick={() => setSelectedInvoice(inv)}>Details</Button>
+                                                {inv.id && (
+                                                    <Button variant="outline" size="sm" className="h-8" disabled={downloading === inv.id}
+                                                        onClick={() => handleDownloadPDF(inv.id)}>
+                                                        {downloading === inv.id ? "..." : "PDF"}
+                                                    </Button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -346,6 +401,73 @@ export default function BillingPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Invoice Detail Modal */}
+            {selectedInvoice && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedInvoice(null)}>
+                    <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle>Invoice {selectedInvoice.invoice_number}</CardTitle>
+                                    <CardDescription>Period: {selectedInvoice.year_month}</CardDescription>
+                                </div>
+                                <Badge variant={getStatusBadgeVar(selectedInvoice.status) as any}>{selectedInvoice.status}</Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-muted-foreground">Due Date</p>
+                                    <p className="font-medium">{new Date(selectedInvoice.due_date).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground">Grace Period End</p>
+                                    <p className="font-medium">{new Date(selectedInvoice.grace_period_end).toLocaleDateString()}</p>
+                                </div>
+                                {selectedInvoice.total_input_tokens !== undefined && (
+                                    <>
+                                        <div>
+                                            <p className="text-muted-foreground">Input Tokens</p>
+                                            <p className="font-medium">{selectedInvoice.total_input_tokens?.toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Output Tokens</p>
+                                            <p className="font-medium">{selectedInvoice.total_output_tokens?.toLocaleString()}</p>
+                                        </div>
+                                    </>
+                                )}
+                                {selectedInvoice.fixed_fee_inr !== undefined && (
+                                    <>
+                                        <div>
+                                            <p className="text-muted-foreground">Fixed Fee</p>
+                                            <p className="font-medium">₹{selectedInvoice.fixed_fee_inr?.toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Variable Cost</p>
+                                            <p className="font-medium">${selectedInvoice.variable_cost_usd?.toFixed(2)}</p>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="font-semibold">Total Due</span>
+                                <span className="text-xl font-bold">{getInvoiceTotal(selectedInvoice)}</span>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex gap-2">
+                            {selectedInvoice.id && (
+                                <Button variant="outline" className="flex-1" disabled={downloading === selectedInvoice.id}
+                                    onClick={() => handleDownloadPDF(selectedInvoice.id)}>
+                                    {downloading === selectedInvoice.id ? "Generating..." : "Download PDF"}
+                                </Button>
+                            )}
+                            <Button variant="ghost" className="flex-1" onClick={() => setSelectedInvoice(null)}>Close</Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            )}
 
         </div>
     );

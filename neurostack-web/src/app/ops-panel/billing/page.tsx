@@ -37,7 +37,10 @@ interface BillingCycleResponse {
     year_month: string;
     status: string;
     due_date: string;
-    calculated_costs: {
+    grace_period_end?: string;
+    total_due_display?: string;
+    totalDueDisplay?: string;
+    calculated_costs?: {
         total_due_display: string;
     };
 }
@@ -65,7 +68,7 @@ export default function AdminBillingPage() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -82,7 +85,7 @@ export default function AdminBillingPage() {
         setBillingLoading(true);
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${userId}/billing`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${userId}/billing`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -105,7 +108,7 @@ export default function AdminBillingPage() {
     const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pdf`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}/pdf`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to download PDF");
@@ -129,7 +132,7 @@ export default function AdminBillingPage() {
         const token = localStorage.getItem("jwt");
         try {
             // Correct endpoint is POST /admin/invoices/{id}/pay
-            const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pay`;
+            const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}/pay`;
             const res = await fetch(url, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
@@ -152,10 +155,68 @@ export default function AdminBillingPage() {
     };
 
     const [approvalKey, setApprovalKey] = useState("");
+    const [rejectReason, setRejectReason] = useState("");
+
+    const handleMarkUnpaid = async (invoiceId: string) => {
+        if (!confirm("Mark this invoice as UNPAID? The user's billing status will be recalculated.")) return;
+        const token = localStorage.getItem("jwt");
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}/unpay`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok && selectedUser) {
+                fetchUserBilling(selectedUser.user_id);
+                fetchUsers();
+            }
+        } catch (e) {
+            alert("Network error");
+        }
+    };
+
+    const handleEditDueDate = async (invoiceId: string, currentDueDate: string) => {
+        const newDate = prompt("Enter new due date (YYYY-MM-DD):", currentDueDate?.split("T")[0]);
+        if (!newDate) return;
+        const token = localStorage.getItem("jwt");
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ due_date: newDate + "T00:00:00Z" })
+            });
+            if (res.ok && selectedUser) {
+                fetchUserBilling(selectedUser.user_id);
+            }
+        } catch (e) {
+            alert("Network error");
+        }
+    };
+
+    const handleReject = async () => {
+        if (!rejectReason.trim()) { alert("Reason is required"); return; }
+        const token = localStorage.getItem("jwt");
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${selectedUser?.user_id}/reject`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ reason: rejectReason })
+            });
+            if (res.ok) {
+                setRejectReason("");
+                fetchUsers();
+                setSelectedUser(null);
+            } else {
+                const err = await res.json();
+                alert(`Error: ${err.detail}`);
+            }
+        } catch (e) {
+            alert("Network error");
+        }
+    };
 
     const handleAction = async (action: string, payload: any) => {
         const token = localStorage.getItem("jwt");
-        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/status`;
+        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${selectedUser?.user_id}/status`;
         let body: any = {};
 
         if (action === "BLOCK") {
@@ -164,7 +225,7 @@ export default function AdminBillingPage() {
             body = { status: "ACTIVE", reason: "Manual Admin Activation" };
         } else if (action === "APPROVE") {
             // Different endpoint for approval
-            url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/approve`;
+            url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${selectedUser?.user_id}/approve`;
             body = { groq_api_key: approvalKey };
         }
 
@@ -292,6 +353,17 @@ export default function AdminBillingPage() {
                                                                     <Button className="w-full" onClick={() => handleAction("APPROVE", null)}>
                                                                         Approve & Activate
                                                                     </Button>
+                                                                    <div className="border-t pt-4 space-y-2">
+                                                                        <Label>Reject with Reason</Label>
+                                                                        <Input
+                                                                            placeholder="Enter rejection reason..."
+                                                                            value={rejectReason}
+                                                                            onChange={(e) => setRejectReason(e.target.value)}
+                                                                        />
+                                                                        <Button variant="destructive" className="w-full" onClick={handleReject}>
+                                                                            Reject User
+                                                                        </Button>
+                                                                    </div>
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex gap-4">
@@ -352,17 +424,22 @@ export default function AdminBillingPage() {
                                                                                                     {inv.status}
                                                                                                 </Badge>
                                                                                             </TableCell>
-                                                                                            <TableCell>{inv.calculated_costs.total_due_display}</TableCell>
+                                                                                            <TableCell>{inv.total_due_display || inv.totalDueDisplay || inv.calculated_costs?.total_due_display || "N/A"}</TableCell>
                                                                                             <TableCell className="text-right flex justify-end gap-2">
                                                                                                 {inv.status !== "PAID" && (
                                                                                                     <Button size="icon" variant="ghost" title="Mark as Paid" onClick={() => handleMarkPaid(inv.id)} className="text-green-600 hover:text-green-700 hover:bg-green-50">
                                                                                                         <CreditCard className="h-4 w-4" />
                                                                                                     </Button>
                                                                                                 )}
+                                                                                                {inv.status === "PAID" && (
+                                                                                                    <Button size="icon" variant="ghost" title="Mark Unpaid" onClick={() => handleMarkUnpaid(inv.id)} className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50">
+                                                                                                        <AlertCircle className="h-4 w-4" />
+                                                                                                    </Button>
+                                                                                                )}
                                                                                                 <Button size="icon" variant="ghost" title="Download PDF" onClick={() => handleDownloadPdf(inv.id, inv.invoice_number)}>
                                                                                                     <FileText className="h-4 w-4" />
                                                                                                 </Button>
-                                                                                                <Button size="icon" variant="ghost" title="Edit Due Date" disabled>
+                                                                                                <Button size="icon" variant="ghost" title="Edit Due Date" onClick={() => handleEditDueDate(inv.id, inv.due_date)}>
                                                                                                     <Calendar className="h-4 w-4" />
                                                                                                 </Button>
                                                                                             </TableCell>

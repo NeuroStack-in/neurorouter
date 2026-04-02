@@ -22,7 +22,7 @@ import styles from "./auth.module.css"
 
 type AuthView = "login" | "register"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:7860"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7860"
 
 export default function AuthPage() {
     const router = useRouter()
@@ -142,6 +142,23 @@ export default function AuthPage() {
             if (!token) throw new Error("Missing access token")
 
             localStorage.setItem("jwt", token)
+            if (data.refresh_token) {
+                localStorage.setItem("refresh_token", data.refresh_token)
+            }
+
+            // Fetch user profile to cache account status
+            try {
+                const meRes = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { "Authorization": `Bearer ${token}` },
+                })
+                if (meRes.ok) {
+                    const profile = await meRes.json()
+                    localStorage.setItem("user_profile", JSON.stringify(profile))
+                }
+            } catch {
+                // profile fetch is best-effort
+            }
+
             router.push("/dashboard")
         } catch (error: any) {
             const msg = error?.message || "Authentication failed. Please try again."
@@ -181,6 +198,9 @@ export default function AuthPage() {
             if (!token) throw new Error("Missing access token")
 
             localStorage.setItem("jwt", token)
+            if (data.refresh_token) {
+                localStorage.setItem("refresh_token", data.refresh_token)
+            }
             router.push("/dashboard")
         } catch (error: any) {
             const msg = error?.message || "Google authentication failed. Please try again."
@@ -281,8 +301,8 @@ export default function AuthPage() {
                                 </CardTitle>
                                 <CardDescription className={styles.cardDescription}>
                                     {view === "login"
-                                        ? "Sign in to access your NeuroStack dashboard"
-                                        : "Start building with NeuroStack today"
+                                        ? "Sign in to access your NeuroRouter dashboard"
+                                        : "Start building with NeuroRouter today"
                                     }
                                 </CardDescription>
                             </CardHeader>

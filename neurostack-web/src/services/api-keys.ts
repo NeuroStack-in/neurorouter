@@ -4,14 +4,18 @@ export interface ApiKey {
     id: string
     name: string
     key_prefix: string
+    masked_reference?: string
     last_used_at: string | null
     created_at: string
     is_active: boolean
 }
 
 export interface CreateApiKeyResponse {
+    id: string
     api_key: string         // The full secret key (shown only once)
-    key_info: ApiKey
+    key_prefix: string
+    name?: string
+    created_at: string
 }
 
 export const apiKeyService = {

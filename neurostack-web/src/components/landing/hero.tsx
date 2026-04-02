@@ -72,7 +72,7 @@ export function Hero() {
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className={styles.heroDescription}
                     >
-                        NeuroRouter runs self-hosted LLMs inside NeuroStack infrastructure. Use it as a drop-in replacement for OpenAI APIs — no code changes required.
+                        NeuroRouter runs self-hosted LLMs inside NeuroRouter infrastructure. Use it as a drop-in replacement for OpenAI APIs — no code changes required.
                     </motion.p>
 
                     <motion.div
