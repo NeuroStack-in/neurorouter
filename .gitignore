@@ -52,3 +52,6 @@ test.txt
 # Local secrets (never commit)
 .env
 test.txt
+
+# Test notebooks
+*.ipynb

@@ -209,7 +209,26 @@ export default function UsagePage() {
                             </div>
                         </div>
                     </div>
-                    <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-md transition-colors shadow-sm bg-white">
+                    <button
+                        onClick={() => {
+                            if (!stats) return;
+                            const csv = [
+                                "metric,value",
+                                `total_input_tokens,${stats.total_input_tokens}`,
+                                `total_output_tokens,${stats.total_output_tokens}`,
+                                `total_requests,${stats.total_requests}`,
+                                ...(stats.chart_data || []).map(p => `usage_${p.date},${p.tokens}`),
+                            ].join("\n");
+                            const blob = new Blob([csv], { type: "text/csv" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `neurorouter-usage-${new Date().toISOString().slice(0, 10)}.csv`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-md transition-colors shadow-sm bg-white"
+                    >
                         <Download className="h-4 w-4 text-slate-500" />
                         Export
                     </button>
