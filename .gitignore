@@ -48,3 +48,7 @@ DEMO_GUIDE.txt
 
 # Demo test files (local only)
 **/demo_test.go
+test.txt
+# Local secrets (never commit)
+.env
+test.txt

@@ -60,6 +60,7 @@ export default function AdminBillingPage() {
     const [selectedUser, setSelectedUser] = useState<AdminUserBillingSummary | null>(null);
     const [detailedBilling, setDetailedBilling] = useState<BillingDashboardResponse | null>(null);
     const [billingLoading, setBillingLoading] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -68,7 +69,7 @@ export default function AdminBillingPage() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -85,7 +86,7 @@ export default function AdminBillingPage() {
         setBillingLoading(true);
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${userId}/billing`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${userId}/billing`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -101,6 +102,7 @@ export default function AdminBillingPage() {
     const handleManageClick = (user: AdminUserBillingSummary) => {
         setSelectedUser(user);
         setDetailedBilling(null); // Reset
+        setDialogOpen(true);
         fetchUserBilling(user.user_id); // Fetch details immediately
     };
 
@@ -108,7 +110,7 @@ export default function AdminBillingPage() {
     const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}/pdf`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pdf`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to download PDF");
@@ -131,8 +133,8 @@ export default function AdminBillingPage() {
 
         const token = localStorage.getItem("jwt");
         try {
-            // Correct endpoint is POST /admin/invoices/{id}/pay
-            const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}/pay`;
+            // Correct endpoint is POST /billing/admin/invoices/{id}/pay
+            const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pay`;
             const res = await fetch(url, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
@@ -161,7 +163,7 @@ export default function AdminBillingPage() {
         if (!confirm("Mark this invoice as UNPAID? The user's billing status will be recalculated.")) return;
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}/unpay`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/unpay`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -179,7 +181,7 @@ export default function AdminBillingPage() {
         if (!newDate) return;
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/invoices/${invoiceId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}`, {
                 method: "PUT",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ due_date: newDate + "T00:00:00Z" })
@@ -196,7 +198,7 @@ export default function AdminBillingPage() {
         if (!rejectReason.trim()) { alert("Reason is required"); return; }
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${selectedUser?.user_id}/reject`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/reject`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ reason: rejectReason })
@@ -216,7 +218,7 @@ export default function AdminBillingPage() {
 
     const handleAction = async (action: string, payload: any) => {
         const token = localStorage.getItem("jwt");
-        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${selectedUser?.user_id}/status`;
+        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/status`;
         let body: any = {};
 
         if (action === "BLOCK") {
@@ -225,7 +227,7 @@ export default function AdminBillingPage() {
             body = { status: "ACTIVE", reason: "Manual Admin Activation" };
         } else if (action === "APPROVE") {
             // Different endpoint for approval
-            url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/admin/users/${selectedUser?.user_id}/approve`;
+            url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/approve`;
             body = { groq_api_key: approvalKey };
         }
 
@@ -317,15 +319,24 @@ export default function AdminBillingPage() {
                                             <Badge variant="secondary">{user.last_invoice_status || "None"}</Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button size="sm" variant="outline" onClick={() => handleManageClick(user)}>Manage</Button>
-                                                </DialogTrigger>
+                                            <Button size="sm" variant="outline" onClick={() => handleManageClick(user)}>Manage</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            {/* Manage User Dialog — controlled, rendered once outside the loop */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                {selectedUser && (
                                                 <DialogContent className={styles.lightThemeWrapper}>
                                                     <DialogHeader>
-                                                        <DialogTitle>Manage User: {user.email}</DialogTitle>
+                                                        <DialogTitle>Manage User: {selectedUser.email}</DialogTitle>
                                                         <DialogDescription>
-                                                            ID: {user.user_id}
+                                                            ID: {selectedUser.user_id}
                                                         </DialogDescription>
                                                     </DialogHeader>
 
@@ -336,7 +347,7 @@ export default function AdminBillingPage() {
                                                         </TabsList>
 
                                                         <TabsContent value="overview" className="space-y-4 py-4">
-                                                            {user.account_status === "PENDING_APPROVAL" ? (
+                                                            {selectedUser.account_status === "PENDING_APPROVAL" ? (
                                                                 <div className="space-y-4">
                                                                     <div className="p-3 bg-blue-50 text-blue-800 text-sm rounded-md">
                                                                         User is pending approval. Please validate a Groq Key to activate.
@@ -367,7 +378,7 @@ export default function AdminBillingPage() {
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex gap-4">
-                                                                    {user.account_status !== "BLOCKED" ? (
+                                                                    {selectedUser.account_status !== "BLOCKED" ? (
                                                                         <Button variant="destructive" className="w-full" onClick={() => handleAction("BLOCK", null)}>
                                                                             <ShieldAlert className="mr-2 h-4 w-4" /> Block User
                                                                         </Button>
@@ -379,8 +390,8 @@ export default function AdminBillingPage() {
                                                                 </div>
                                                             )}
                                                             <div className="text-sm text-muted-foreground mt-4">
-                                                                <p><strong>User ID:</strong> {user.user_id}</p>
-                                                                <p><strong>Email:</strong> {user.email}</p>
+                                                                <p><strong>User ID:</strong> {selectedUser.user_id}</p>
+                                                                <p><strong>Email:</strong> {selectedUser.email}</p>
                                                             </div>
                                                         </TabsContent>
 
@@ -456,15 +467,8 @@ export default function AdminBillingPage() {
                                                         </TabsContent>
                                                     </Tabs>
                                                 </DialogContent>
-                                            </Dialog>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                )}
+            </Dialog>
         </div>
     );
 }
