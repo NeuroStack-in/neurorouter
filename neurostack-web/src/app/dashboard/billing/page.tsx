@@ -80,7 +80,7 @@ export default function BillingPage() {
 
     const handleDownloadPDF = async (invoiceId: string) => {
         setDownloading(invoiceId);
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860';
+        const apiBase = process.env.NEXT_PUBLIC_API_URL;
         const token = localStorage.getItem("jwt");
 
         try {
@@ -161,7 +161,7 @@ export default function BillingPage() {
             const token = localStorage.getItem("jwt");
             if (!token) throw new Error("Not authenticated");
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/me`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

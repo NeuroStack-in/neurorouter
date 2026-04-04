@@ -22,7 +22,7 @@ import styles from "./auth.module.css"
 
 type AuthView = "login" | "register"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7860"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL!
 
 export default function AuthPage() {
     const router = useRouter()

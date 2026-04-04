@@ -79,7 +79,7 @@ const FALLBACK_MODELS = [
  * Public model fetch for Docs / frontend display.
  * No authentication required.
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:7860"
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 /**
  * Public model fetch for Docs / frontend display.

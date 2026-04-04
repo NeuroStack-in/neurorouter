@@ -69,7 +69,7 @@ export default function AdminBillingPage() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -86,7 +86,7 @@ export default function AdminBillingPage() {
         setBillingLoading(true);
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${userId}/billing`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${userId}/billing`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -110,7 +110,7 @@ export default function AdminBillingPage() {
     const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pdf`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}/pdf`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to download PDF");
@@ -134,7 +134,7 @@ export default function AdminBillingPage() {
         const token = localStorage.getItem("jwt");
         try {
             // Correct endpoint is POST /billing/admin/invoices/{id}/pay
-            const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/pay`;
+            const url = `${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}/pay`;
             const res = await fetch(url, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
@@ -163,7 +163,7 @@ export default function AdminBillingPage() {
         if (!confirm("Mark this invoice as UNPAID? The user's billing status will be recalculated.")) return;
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}/unpay`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}/unpay`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -181,7 +181,7 @@ export default function AdminBillingPage() {
         if (!newDate) return;
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/invoices/${invoiceId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}`, {
                 method: "PUT",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ due_date: newDate + "T00:00:00Z" })
@@ -198,7 +198,7 @@ export default function AdminBillingPage() {
         if (!rejectReason.trim()) { alert("Reason is required"); return; }
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/reject`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${selectedUser?.user_id}/reject`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ reason: rejectReason })
@@ -218,7 +218,7 @@ export default function AdminBillingPage() {
 
     const handleAction = async (action: string, payload: any) => {
         const token = localStorage.getItem("jwt");
-        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/status`;
+        let url = `${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${selectedUser?.user_id}/status`;
         let body: any = {};
 
         if (action === "BLOCK") {
@@ -227,7 +227,7 @@ export default function AdminBillingPage() {
             body = { status: "ACTIVE", reason: "Manual Admin Activation" };
         } else if (action === "APPROVE") {
             // Different endpoint for approval
-            url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7860'}/billing/admin/users/${selectedUser?.user_id}/approve`;
+            url = `${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${selectedUser?.user_id}/approve`;
             body = { groq_api_key: approvalKey };
         }
 
