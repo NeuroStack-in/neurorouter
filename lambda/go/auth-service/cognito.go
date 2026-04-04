@@ -180,3 +180,17 @@ func CognitoAdminCreateUser(ctx context.Context, email, fullName string) (string
 	}
 	return "", fmt.Errorf("cognito admin create user: no sub in response")
 }
+
+// CognitoAdminSetPassword sets a permanent password for a user (used for Google users).
+func CognitoAdminSetPassword(ctx context.Context, email, password string) error {
+	_, err := cognitoClient.AdminSetUserPassword(ctx, &cip.AdminSetUserPasswordInput{
+		UserPoolId: &userPoolID,
+		Username:   &email,
+		Password:   &password,
+		Permanent:  true,
+	})
+	if err != nil {
+		return fmt.Errorf("cognito admin set password: %w", err)
+	}
+	return nil
+}

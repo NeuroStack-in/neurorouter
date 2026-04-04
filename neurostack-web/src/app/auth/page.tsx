@@ -210,42 +210,45 @@ export default function AuthPage() {
         }
     }
 
+    // Reset form on mount
     useEffect(() => {
-        // Reset form on mount
         setFormData({ email: "", password: "", confirmPassword: "", name: "" })
         setErrors({})
+    }, [])
 
-        // Initialize Google Sign-In (only if client ID is configured)
+    // Initialize Google Sign-In (re-run when view changes so button persists)
+    useEffect(() => {
         const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        if (!googleClientId) return
+
         const initializeGoogle = () => {
-            if ((window as any).google && googleClientId) {
-                (window as any).google.accounts.id.initialize({
-                    client_id: googleClientId,
-                    callback: handleGoogleAuth
-                });
-                (window as any).google.accounts.id.renderButton(
-                    document.getElementById("google-signin-button"),
-                    { theme: "outline", size: "large", width: "100%" }
-                );
-            }
+            const container = document.getElementById("google-signin-button")
+            if (!(window as any).google || !container) return;
+
+            (window as any).google.accounts.id.initialize({
+                client_id: googleClientId,
+                callback: handleGoogleAuth
+            });
+            (window as any).google.accounts.id.renderButton(
+                container,
+                { theme: "outline", size: "large", width: "100%" }
+            );
         }
 
+        // If Google SDK already loaded, render immediately
+        if ((window as any).google) {
+            // Small delay to ensure DOM element is mounted
+            const timer = setTimeout(initializeGoogle, 100)
+            return () => clearTimeout(timer)
+        }
+
+        // Otherwise wait for script to load
         const script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
         if (script) {
             script.addEventListener('load', initializeGoogle);
+            return () => script.removeEventListener('load', initializeGoogle);
         }
-
-        // If script is already loaded
-        if ((window as any).google) {
-            initializeGoogle();
-        }
-
-        return () => {
-            if (script) {
-                script.removeEventListener('load', initializeGoogle);
-            }
-        }
-    }, [])
+    }, [view])
 
     const toggleView = () => {
         setView(prev => prev === "login" ? "register" : "login")

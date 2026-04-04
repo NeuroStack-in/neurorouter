@@ -69,7 +69,7 @@ export default function UsagePage() {
     }
 
     const formattedDate = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    const chartLabels = stats?.chart_data.length
+    const chartLabels = stats?.chart_data?.length
         ? stats.chart_data.map(d => d.date)
         : Array.from({ length: 7 }, (_, i) => {
             const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1 + (i * 5))
@@ -284,7 +284,7 @@ export default function UsagePage() {
 
                         {/* Chart Line */}
                         <div className="absolute inset-0 left-8 right-0 top-0 bottom-6 flex items-end justify-around px-4">
-                            {stats?.chart_data.length === 0 ? (
+                            {stats?.chart_data?.length === 0 ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="flex flex-col items-center justify-center p-6 bg-slate-50/50 rounded-full border border-slate-100/50 backdrop-blur-[2px]">
                                         <span className="text-slate-400 font-medium mb-1">No data available</span>
@@ -292,7 +292,7 @@ export default function UsagePage() {
                                     </div>
                                 </div>
                             ) : (
-                                stats?.chart_data.map((point, i) => (
+                                stats?.chart_data?.map((point, i) => (
                                     <div key={i} className="flex flex-col items-center group">
                                         <div
                                             className="w-12 bg-blue-500 rounded-t-sm hover:bg-blue-600 transition-all relative"

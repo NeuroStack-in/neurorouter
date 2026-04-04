@@ -2,11 +2,17 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -194,30 +200,68 @@ func handleGoogleLogin(ctx context.Context, req events.APIGatewayProxyRequest) (
 			return jsonResponse(http.StatusForbidden, ErrorResponse{Detail: "Account is blocked due to billing"})
 		}
 	} else {
-		// New Google user — create via Cognito admin (this triggers Post-Confirmation → DynamoDB row)
-		_, err = CognitoAdminCreateUser(ctx, googleEmail, "")
-		if err != nil && !strings.Contains(err.Error(), "UsernameExistsException") {
-			return serverError("create google user: " + err.Error())
+		// New Google user — create via Cognito admin
+		cognitoSub, err := CognitoAdminCreateUser(ctx, googleEmail, "")
+		if err != nil {
+			if strings.Contains(err.Error(), "UsernameExistsException") {
+				// User exists in Cognito but not DynamoDB — look up the sub
+				cogUser, cerr := cognitoClient.AdminGetUser(ctx, &cip.AdminGetUserInput{
+					UserPoolId: &userPoolID,
+					Username:   &googleEmail,
+				})
+				if cerr != nil {
+					return serverError("cognito get user: " + cerr.Error())
+				}
+				for _, attr := range cogUser.UserAttributes {
+					if aws.ToString(attr.Name) == "sub" {
+						cognitoSub = aws.ToString(attr.Value)
+					}
+				}
+			} else {
+				return serverError("create google user: " + err.Error())
+			}
 		}
-		// Update the DynamoDB row with google_id
-		newUser, _ := GetUserByEmail(ctx, googleEmail)
-		if newUser != nil {
-			_ = UpdateUserFields(ctx, newUser.ID, map[string]interface{}{
-				"google_id":     googleSub,
-				"auth_provider": "google",
-			})
+
+		// Create DynamoDB record directly (Post-Confirmation trigger doesn't fire for admin-created users)
+		now := time.Now().UTC().Format(time.RFC3339)
+		newUser := &User{
+			ID:            cognitoSub,
+			Email:         googleEmail,
+			GoogleID:      googleSub,
+			AuthProvider:  "google",
+			IsActive:      true,
+			AccountStatus: "PENDING_APPROVAL",
+			PlanID:        "free",
+			CreatedAt:     now,
+			UpdatedAt:     now,
+		}
+		if err := PutUser(ctx, newUser); err != nil {
+			return serverError("create google user record: " + err.Error())
 		}
 	}
 
-	// Issue Cognito tokens via admin auth (since we don't have a password for Google users)
-	// We use AdminInitiateAuth with ADMIN_NO_SRP_AUTH is not applicable here.
-	// For Google users, return a custom token indicating success.
-	// In production, this would use Cognito's hosted UI OAuth flow.
-	// For API compatibility, we construct a response matching the Python backend.
+	// Derive a deterministic password from the Google sub so we can use Cognito password auth.
+	h := sha256.Sum256([]byte("neurorouter-google:" + googleSub))
+	derivedPassword := "G!" + hex.EncodeToString(h[:16]) // meets Cognito password policy
+
+	// Set the derived password on the Cognito user
+	if err := CognitoAdminSetPassword(ctx, googleEmail, derivedPassword); err != nil {
+		log.Printf("WARN: set password for google user: %v", err)
+		return serverError("set google user password: " + err.Error())
+	}
+
+	// Now authenticate with real Cognito tokens
+	accessToken, refreshToken, expiresIn, err := CognitoLogin(ctx, googleEmail, derivedPassword)
+	if err != nil {
+		log.Printf("WARN: cognito login for google user: %v", err)
+		return serverError("google user login: " + err.Error())
+	}
+
 	return jsonResponse(http.StatusOK, TokenResponse{
-		AccessToken: fmt.Sprintf("google-auth:%s", googleSub),
-		TokenType:   "bearer",
-		ExpiresIn:   3600,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "bearer",
+		ExpiresIn:    expiresIn,
 	})
 }
 

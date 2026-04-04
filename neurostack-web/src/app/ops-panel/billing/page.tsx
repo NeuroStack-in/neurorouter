@@ -19,36 +19,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import styles from "../../dashboard/billing/billing.module.css"; // Reuse white theme
 
-// --- Types (Mirroring Backend) ---
+// --- Types (Mirroring Go Backend — camelCase JSON) ---
 interface AdminUserBillingSummary {
-    user_id: string;
+    userId: string;
     email: string;
-    full_name: string;
-    account_status: string;
-    current_month_usage: {
-        total_display: string;
+    fullName: string;
+    accountStatus: string;
+    currentMonthUsage?: {
+        totalDisplay: string;
     } | null;
-    last_invoice_status: string | null;
+    lastInvoiceStatus?: string | null;
 }
 
 interface BillingCycleResponse {
     id: string;
-    invoice_number: string;
-    year_month: string;
+    invoiceNumber: string;
+    yearMonth: string;
     status: string;
-    due_date: string;
-    grace_period_end?: string;
-    total_due_display?: string;
+    dueDate: string;
+    gracePeriodEnd?: string;
     totalDueDisplay?: string;
-    calculated_costs?: {
-        total_due_display: string;
+    calculatedCosts?: {
+        totalDueDisplay: string;
     };
 }
 
 interface BillingDashboardResponse {
-    current_month: any;
-    past_invoices: BillingCycleResponse[];
-    account_status: string;
+    currentMonth: any;
+    pastInvoices: BillingCycleResponse[];
+    accountStatus: string;
 }
 
 export default function AdminBillingPage() {
@@ -69,7 +68,7 @@ export default function AdminBillingPage() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -86,7 +85,7 @@ export default function AdminBillingPage() {
         setBillingLoading(true);
         try {
             const token = localStorage.getItem("jwt");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${userId}/billing`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}/billing`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -103,14 +102,14 @@ export default function AdminBillingPage() {
         setSelectedUser(user);
         setDetailedBilling(null); // Reset
         setDialogOpen(true);
-        fetchUserBilling(user.user_id); // Fetch details immediately
+        fetchUserBilling(user.userId); // Fetch details immediately
     };
 
     // Action Handlers
     const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}/pdf`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/invoices/${invoiceId}/pdf`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to download PDF");
@@ -133,8 +132,8 @@ export default function AdminBillingPage() {
 
         const token = localStorage.getItem("jwt");
         try {
-            // Correct endpoint is POST /billing/admin/invoices/{id}/pay
-            const url = `${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}/pay`;
+            // Correct endpoint is POST /admin/invoices/{id}/pay
+            const url = `${process.env.NEXT_PUBLIC_API_URL}/admin/invoices/${invoiceId}/pay`;
             const res = await fetch(url, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
@@ -148,7 +147,7 @@ export default function AdminBillingPage() {
 
             // Refresh
             if (selectedUser) {
-                fetchUserBilling(selectedUser.user_id);
+                fetchUserBilling(selectedUser.userId);
                 fetchUsers(); // Refresh main list too to update banners
             }
         } catch (e) {
@@ -163,12 +162,12 @@ export default function AdminBillingPage() {
         if (!confirm("Mark this invoice as UNPAID? The user's billing status will be recalculated.")) return;
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}/unpay`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/invoices/${invoiceId}/unpay`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok && selectedUser) {
-                fetchUserBilling(selectedUser.user_id);
+                fetchUserBilling(selectedUser.userId);
                 fetchUsers();
             }
         } catch (e) {
@@ -181,13 +180,13 @@ export default function AdminBillingPage() {
         if (!newDate) return;
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/invoices/${invoiceId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/invoices/${invoiceId}`, {
                 method: "PUT",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ due_date: newDate + "T00:00:00Z" })
             });
             if (res.ok && selectedUser) {
-                fetchUserBilling(selectedUser.user_id);
+                fetchUserBilling(selectedUser.userId);
             }
         } catch (e) {
             alert("Network error");
@@ -198,7 +197,7 @@ export default function AdminBillingPage() {
         if (!rejectReason.trim()) { alert("Reason is required"); return; }
         const token = localStorage.getItem("jwt");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${selectedUser?.user_id}/reject`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${selectedUser?.userId}/reject`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ reason: rejectReason })
@@ -218,7 +217,7 @@ export default function AdminBillingPage() {
 
     const handleAction = async (action: string, payload: any) => {
         const token = localStorage.getItem("jwt");
-        let url = `${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${selectedUser?.user_id}/status`;
+        let url = `${process.env.NEXT_PUBLIC_API_URL}/admin/users/${selectedUser?.userId}/status`;
         let body: any = {};
 
         if (action === "BLOCK") {
@@ -227,7 +226,7 @@ export default function AdminBillingPage() {
             body = { status: "ACTIVE", reason: "Manual Admin Activation" };
         } else if (action === "APPROVE") {
             // Different endpoint for approval
-            url = `${process.env.NEXT_PUBLIC_API_URL}/billing/admin/users/${selectedUser?.user_id}/approve`;
+            url = `${process.env.NEXT_PUBLIC_API_URL}/admin/users/${selectedUser?.userId}/approve`;
             body = { groq_api_key: approvalKey };
         }
 
@@ -250,7 +249,7 @@ export default function AdminBillingPage() {
 
     const filteredUsers = users.filter(u =>
         u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.user_id.toLowerCase().includes(searchTerm.toLowerCase())
+        u.userId.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -293,30 +292,30 @@ export default function AdminBillingPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow>
+                                <TableRow key="loading">
                                     <TableCell colSpan={5} className="text-center h-24">Loading users...</TableCell>
                                 </TableRow>
                             ) : filteredUsers.length === 0 ? (
-                                <TableRow>
+                                <TableRow key="empty">
                                     <TableCell colSpan={5} className="text-center h-24">No users found.</TableCell>
                                 </TableRow>
                             ) : (
                                 filteredUsers.map((user) => (
-                                    <TableRow key={user.user_id}>
+                                    <TableRow key={user.userId}>
                                         <TableCell>
                                             <div className="font-medium">{user.email}</div>
-                                            <div className="text-xs text-muted-foreground font-mono">{user.user_id}</div>
+                                            <div className="text-xs text-muted-foreground font-mono">{user.userId}</div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={user.account_status === "BLOCKED" ? "destructive" : user.account_status === "PENDING_APPROVAL" ? "secondary" : "outline"}>
-                                                {user.account_status}
+                                            <Badge variant={user.accountStatus === "BLOCKED" ? "destructive" : user.accountStatus === "PENDING_APPROVAL" ? "secondary" : "outline"}>
+                                                {user.accountStatus}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            {user.current_month_usage ? user.current_month_usage.total_display : "-"}
+                                            {user.currentMonthUsage ? user.currentMonthUsage.totalDisplay : "-"}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="secondary">{user.last_invoice_status || "None"}</Badge>
+                                            <Badge variant="secondary">{user.lastInvoiceStatus || "None"}</Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button size="sm" variant="outline" onClick={() => handleManageClick(user)}>Manage</Button>
@@ -336,7 +335,7 @@ export default function AdminBillingPage() {
                                                     <DialogHeader>
                                                         <DialogTitle>Manage User: {selectedUser.email}</DialogTitle>
                                                         <DialogDescription>
-                                                            ID: {selectedUser.user_id}
+                                                            ID: {selectedUser.userId}
                                                         </DialogDescription>
                                                     </DialogHeader>
 
@@ -347,7 +346,7 @@ export default function AdminBillingPage() {
                                                         </TabsList>
 
                                                         <TabsContent value="overview" className="space-y-4 py-4">
-                                                            {selectedUser.account_status === "PENDING_APPROVAL" ? (
+                                                            {selectedUser.accountStatus === "PENDING_APPROVAL" ? (
                                                                 <div className="space-y-4">
                                                                     <div className="p-3 bg-blue-50 text-blue-800 text-sm rounded-md">
                                                                         User is pending approval. Please validate a Groq Key to activate.
@@ -378,7 +377,7 @@ export default function AdminBillingPage() {
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex gap-4">
-                                                                    {selectedUser.account_status !== "BLOCKED" ? (
+                                                                    {selectedUser.accountStatus !== "BLOCKED" ? (
                                                                         <Button variant="destructive" className="w-full" onClick={() => handleAction("BLOCK", null)}>
                                                                             <ShieldAlert className="mr-2 h-4 w-4" /> Block User
                                                                         </Button>
@@ -390,7 +389,7 @@ export default function AdminBillingPage() {
                                                                 </div>
                                                             )}
                                                             <div className="text-sm text-muted-foreground mt-4">
-                                                                <p><strong>User ID:</strong> {selectedUser.user_id}</p>
+                                                                <p><strong>User ID:</strong> {selectedUser.userId}</p>
                                                                 <p><strong>Email:</strong> {selectedUser.email}</p>
                                                             </div>
                                                         </TabsContent>
@@ -403,11 +402,11 @@ export default function AdminBillingPage() {
                                                                     <div className="grid grid-cols-2 gap-4">
                                                                         <div className="p-3 border rounded-md bg-slate-50">
                                                                             <div className="text-xs text-muted-foreground">Current Month Estimate</div>
-                                                                            <div className="text-lg font-semibold">{detailedBilling.current_month.total_display}</div>
+                                                                            <div className="text-lg font-semibold">{detailedBilling.currentMonth?.totalDisplay}</div>
                                                                         </div>
                                                                         <div className="p-3 border rounded-md bg-slate-50">
                                                                             <div className="text-xs text-muted-foreground">Status</div>
-                                                                            <Badge>{detailedBilling.account_status}</Badge>
+                                                                            <Badge>{detailedBilling.accountStatus}</Badge>
                                                                         </div>
                                                                     </div>
 
@@ -422,20 +421,20 @@ export default function AdminBillingPage() {
                                                                                 </TableRow>
                                                                             </TableHeader>
                                                                             <TableBody>
-                                                                                {detailedBilling.past_invoices.length === 0 ? (
+                                                                                {!detailedBilling.pastInvoices?.length ? (
                                                                                     <TableRow>
                                                                                         <TableCell colSpan={4} className="text-center">No invoices found.</TableCell>
                                                                                     </TableRow>
                                                                                 ) : (
-                                                                                    detailedBilling.past_invoices.map((inv) => (
+                                                                                    detailedBilling.pastInvoices.map((inv) => (
                                                                                         <TableRow key={inv.id}>
-                                                                                            <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
+                                                                                            <TableCell className="font-mono text-xs">{inv.invoiceNumber}</TableCell>
                                                                                             <TableCell>
                                                                                                 <Badge variant={inv.status === "PAID" ? "default" : inv.status === "OVERDUE" ? "destructive" : "secondary"}>
                                                                                                     {inv.status}
                                                                                                 </Badge>
                                                                                             </TableCell>
-                                                                                            <TableCell>{inv.total_due_display || inv.totalDueDisplay || inv.calculated_costs?.total_due_display || "N/A"}</TableCell>
+                                                                                            <TableCell>{inv.totalDueDisplay || inv.calculatedCosts?.totalDueDisplay || "N/A"}</TableCell>
                                                                                             <TableCell className="text-right flex justify-end gap-2">
                                                                                                 {inv.status !== "PAID" && (
                                                                                                     <Button size="icon" variant="ghost" title="Mark as Paid" onClick={() => handleMarkPaid(inv.id)} className="text-green-600 hover:text-green-700 hover:bg-green-50">
@@ -447,10 +446,10 @@ export default function AdminBillingPage() {
                                                                                                         <AlertCircle className="h-4 w-4" />
                                                                                                     </Button>
                                                                                                 )}
-                                                                                                <Button size="icon" variant="ghost" title="Download PDF" onClick={() => handleDownloadPdf(inv.id, inv.invoice_number)}>
+                                                                                                <Button size="icon" variant="ghost" title="Download PDF" onClick={() => handleDownloadPdf(inv.id, inv.invoiceNumber)}>
                                                                                                     <FileText className="h-4 w-4" />
                                                                                                 </Button>
-                                                                                                <Button size="icon" variant="ghost" title="Edit Due Date" onClick={() => handleEditDueDate(inv.id, inv.due_date)}>
+                                                                                                <Button size="icon" variant="ghost" title="Edit Due Date" onClick={() => handleEditDueDate(inv.id, inv.dueDate)}>
                                                                                                     <Calendar className="h-4 w-4" />
                                                                                                 </Button>
                                                                                             </TableCell>

@@ -164,10 +164,10 @@ export default function DashboardPage() {
                         {/* <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View all</button> */}
                     </div>
                     <div className="space-y-6">
-                        {data?.recent_activity.length === 0 ? (
+                        {!data?.recent_activity?.length ? (
                             <p className="text-slate-500 text-sm">No recent activity found.</p>
                         ) : (
-                            data?.recent_activity.map((activity) => {
+                            data?.recent_activity?.map((activity) => {
                                 const Icon = ICON_MAP[activity.icon_type] || ICON_MAP.default
                                 return (
                                     <div key={activity.id} className="flex items-start gap-4 group">
