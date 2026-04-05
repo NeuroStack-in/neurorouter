@@ -1,6 +1,6 @@
 "use client"
 
-import { Activity, Clock, CreditCard, Key, TrendingUp, Zap, CheckCircle, AlertTriangle } from "lucide-react"
+import { Activity, Clock, CreditCard, Key, TrendingUp, Zap, CheckCircle, AlertTriangle, XCircle } from "lucide-react"
 import styles from "./dashboard.module.css"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
@@ -31,8 +31,6 @@ export default function DashboardPage() {
         }
         fetchDashboard()
     }, [])
-
-    console.log("DASHBOARD DATA:", data); // DEBUG LOG
 
     if (loading) {
         return ( // Simple skeleton
@@ -135,6 +133,95 @@ export default function DashboardPage() {
                 </div>
             </div>
 
+            {/* Token Usage Warning Banner */}
+            {(() => {
+                const FREE_TIER = 1_000_000
+                const inputUsed = data?.total_input_tokens || 0
+                const outputUsed = data?.total_output_tokens || 0
+                const inputPct = (inputUsed / FREE_TIER) * 100
+                const outputPct = (outputUsed / FREE_TIER) * 100
+                const maxPct = Math.max(inputPct, outputPct)
+                const inputExceeded = inputUsed >= FREE_TIER
+                const outputExceeded = outputUsed >= FREE_TIER
+                const anyExceeded = inputExceeded || outputExceeded
+                const isWarning = maxPct >= 80 && !anyExceeded
+
+                if (!isWarning && !anyExceeded) return null
+
+                return (
+                    <div className={cn(
+                        "rounded-xl border p-4 flex items-start gap-4",
+                        anyExceeded
+                            ? "border-red-200 bg-red-50"
+                            : "border-amber-200 bg-amber-50"
+                    )}>
+                        <div className={cn(
+                            "p-2 rounded-lg shrink-0",
+                            anyExceeded ? "bg-red-100" : "bg-amber-100"
+                        )}>
+                            {anyExceeded
+                                ? <XCircle className="h-5 w-5 text-red-600" />
+                                : <AlertTriangle className="h-5 w-5 text-amber-600" />
+                            }
+                        </div>
+                        <div className="flex-1">
+                            <h4 className={cn(
+                                "text-sm font-semibold",
+                                anyExceeded ? "text-red-800" : "text-amber-800"
+                            )}>
+                                {anyExceeded ? "Free Tier Limit Exceeded" : "Approaching Free Tier Limit"}
+                            </h4>
+                            <div className="mt-2 space-y-2">
+                                <div>
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className={inputExceeded ? "text-red-700 font-semibold" : "text-slate-600"}>
+                                            Input Tokens: {inputUsed.toLocaleString()} / {FREE_TIER.toLocaleString()}
+                                        </span>
+                                        <span className={inputExceeded ? "text-red-700 font-semibold" : "text-slate-500"}>
+                                            {Math.min(inputPct, 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 rounded-full h-2">
+                                        <div className={cn(
+                                            "h-2 rounded-full transition-all",
+                                            inputExceeded ? "bg-red-500" : inputPct >= 80 ? "bg-amber-500" : "bg-blue-500"
+                                        )} style={{ width: `${Math.min(inputPct, 100)}%` }} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className={outputExceeded ? "text-red-700 font-semibold" : "text-slate-600"}>
+                                            Output Tokens: {outputUsed.toLocaleString()} / {FREE_TIER.toLocaleString()}
+                                        </span>
+                                        <span className={outputExceeded ? "text-red-700 font-semibold" : "text-slate-500"}>
+                                            {Math.min(outputPct, 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 rounded-full h-2">
+                                        <div className={cn(
+                                            "h-2 rounded-full transition-all",
+                                            outputExceeded ? "bg-red-500" : outputPct >= 80 ? "bg-amber-500" : "bg-blue-500"
+                                        )} style={{ width: `${Math.min(outputPct, 100)}%` }} />
+                                    </div>
+                                </div>
+                            </div>
+                            {anyExceeded && (
+                                <p className="text-xs text-red-700 mt-2">
+                                    Overage charges apply: $2/1M input tokens, $8/1M output tokens.
+                                    <a href="/dashboard/billing" className="font-medium underline ml-1">View billing</a>
+                                </p>
+                            )}
+                            {isWarning && (
+                                <p className="text-xs text-amber-700 mt-2">
+                                    You're approaching your free tier limit. Overage rates: $2/1M input, $8/1M output.
+                                    <a href="/pricing" className="font-medium underline ml-1">Upgrade plan</a>
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )
+            })()}
+
             {/* Grace Period Banner */}
             {data?.graceBanner?.show && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-4">
@@ -201,11 +288,15 @@ export default function DashboardPage() {
                             <span className="font-semibold text-white">Free Tier</span>
                         </div>
 
-                        {/* Fake usage bar for now since we don't have limits set up in overview yet */}
                         <div className="w-full bg-white/10 rounded-full h-1.5 mt-2">
-                            <div className="bg-blue-400 h-1.5 rounded-full w-[25%]"></div>
+                            <div className={cn(
+                                "h-1.5 rounded-full transition-all",
+                                ((data?.total_tokens || 0) / 1_000_000) * 100 >= 80 ? "bg-amber-400" : "bg-blue-400"
+                            )} style={{ width: `${Math.min(((data?.total_tokens || 0) / 1_000_000) * 100, 100)}%` }} />
                         </div>
-                        <p className="text-xs text-slate-400 mt-2 text-right">Standard Rate Limits</p>
+                        <p className="text-xs text-slate-400 mt-2 text-right">
+                            {((data?.total_tokens || 0) / 1_000_000 * 100).toFixed(1)}% of free tier used
+                        </p>
                     </div>
                 </div>
             </div>

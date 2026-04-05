@@ -93,13 +93,15 @@ type GraceBanner struct {
 }
 
 type DashboardOverview struct {
-	UserName       string         `json:"user_name"`
-	TotalTokens    int64          `json:"total_tokens"`
-	TotalRequests  int64          `json:"total_requests"`
-	ActiveKeys     int            `json:"active_keys"`
-	AccountStatus  string         `json:"account_status"`
-	RecentActivity []ActivityItem `json:"recent_activity"`
-	GraceBanner    GraceBanner    `json:"graceBanner"`
+	UserName          string         `json:"user_name"`
+	TotalTokens       int64          `json:"total_tokens"`
+	TotalInputTokens  int64          `json:"total_input_tokens"`
+	TotalOutputTokens int64          `json:"total_output_tokens"`
+	TotalRequests     int64          `json:"total_requests"`
+	ActiveKeys        int            `json:"active_keys"`
+	AccountStatus     string         `json:"account_status"`
+	RecentActivity    []ActivityItem `json:"recent_activity"`
+	GraceBanner       GraceBanner    `json:"graceBanner"`
 }
 
 type UsageChartPoint struct {
@@ -173,9 +175,11 @@ func handleOverview(ctx context.Context, userID string) (events.APIGatewayProxyR
 		return serverError("query usage: " + err.Error())
 	}
 
-	var totalTokens, totalRequests int64
+	var totalTokens, totalInputTokens, totalOutputTokens, totalRequests int64
 	for _, r := range usageRows {
 		totalTokens += r.TotalTokens
+		totalInputTokens += r.InputTokens
+		totalOutputTokens += r.OutputTokens
 		totalRequests += r.RequestCount
 	}
 
@@ -207,13 +211,15 @@ func handleOverview(ctx context.Context, userID string) (events.APIGatewayProxyR
 	}
 
 	return jsonResp(http.StatusOK, DashboardOverview{
-		UserName:       userName,
-		TotalTokens:    totalTokens,
-		TotalRequests:  totalRequests,
-		ActiveKeys:     activeKeys,
-		AccountStatus:  user.AccountStatus,
-		RecentActivity: activities,
-		GraceBanner:    banner,
+		UserName:          userName,
+		TotalTokens:       totalTokens,
+		TotalInputTokens:  totalInputTokens,
+		TotalOutputTokens: totalOutputTokens,
+		TotalRequests:     totalRequests,
+		ActiveKeys:        activeKeys,
+		AccountStatus:     user.AccountStatus,
+		RecentActivity:    activities,
+		GraceBanner:       banner,
 	})
 }
 

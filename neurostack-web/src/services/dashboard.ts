@@ -19,6 +19,8 @@ export interface GraceBanner {
 export interface DashboardOverview {
     user_name?: string
     total_tokens: number
+    total_input_tokens: number
+    total_output_tokens: number
     total_requests: number
     active_keys: number
     account_status: string

@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import styles from "./billing.module.css";
+import { generateInvoicePDF } from "@/lib/invoice-pdf";
 
 // --- Types ---
 
@@ -80,71 +81,20 @@ export default function BillingPage() {
 
     const handleDownloadPDF = async (invoiceId: string) => {
         setDownloading(invoiceId);
-        const apiBase = process.env.NEXT_PUBLIC_API_URL;
-        const token = localStorage.getItem("jwt");
-
-        try {
-            // Try Go endpoint first (POST /billing/invoices/{id}/download → presigned URL)
-            const res = await fetch(`${apiBase}/billing/invoices/${invoiceId}/download`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-                const result = await res.json();
-                if (result.download_url) {
-                    window.open(result.download_url, "_blank");
-                    setDownloading(null);
-                    return;
-                }
-            }
-        } catch {}
-
-        try {
-            // Fallback: Python admin PDF endpoint (GET /billing/admin/invoices/{id}/pdf → blob)
-            const res2 = await fetch(`${apiBase}/billing/admin/invoices/${invoiceId}/pdf`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res2.ok) {
-                const blob = await res2.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `invoice-${invoiceId}.pdf`;
-                a.click();
-                URL.revokeObjectURL(url);
-                setDownloading(null);
-                return;
-            }
-        } catch {}
-
-        // Final fallback: generate a simple text receipt
         const inv = data?.past_invoices.find(i => i.id === invoiceId);
         if (inv) {
-            const text = [
-                "NEUROROUTER INVOICE",
-                "=".repeat(40),
-                `Invoice #: ${inv.invoice_number}`,
-                `Period: ${inv.year_month}`,
-                `Status: ${inv.status}`,
-                `Due Date: ${inv.due_date}`,
-                "",
-                `Input Tokens: ${(inv.total_input_tokens || 0).toLocaleString()}`,
-                `Output Tokens: ${(inv.total_output_tokens || 0).toLocaleString()}`,
-                `Fixed Fee: ₹${inv.fixed_fee_inr || 1599}`,
-                `Variable Cost: $${(inv.variable_cost_usd || 0).toFixed(2)}`,
-                `Total: ${getInvoiceTotal(inv)}`,
-            ].join("\n");
-            const blob = new Blob([text], { type: "text/plain" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `invoice-${inv.invoice_number || invoiceId}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-        } else {
-            alert("PDF generation not available. Deploy Go Lambdas for full PDF support.");
+            generateInvoicePDF({
+                invoiceNumber: inv.invoice_number,
+                yearMonth: inv.year_month,
+                status: inv.status,
+                dueDate: inv.due_date,
+                inputTokens: inv.total_input_tokens || 0,
+                outputTokens: inv.total_output_tokens || 0,
+                fixedFeeInr: inv.fixed_fee_inr || 1599,
+                variableCostUsd: inv.variable_cost_usd || 0,
+                totalDisplay: getInvoiceTotal(inv),
+            });
         }
-
         setDownloading(null);
     };
 

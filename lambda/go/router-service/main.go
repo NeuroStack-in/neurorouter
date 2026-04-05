@@ -116,9 +116,11 @@ func handleChatCompletions(ctx context.Context, req events.APIGatewayProxyReques
 		return serverError("groq: " + lastErr.Error())
 	}
 
-	// Record usage async (fire-and-forget goroutine)
+	// Record usage synchronously (goroutines get frozen in Lambda before completing)
 	if usage != nil {
-		recordUsageAsync(userID, apiKeyID, requestedModel, usage)
+		if err := recordUsage(ctx, userID, apiKeyID, requestedModel, usage); err != nil {
+			log.Printf("WARN: usage recording failed: %v", err)
+		}
 	}
 
 	// Structured log

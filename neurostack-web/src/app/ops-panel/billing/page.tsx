@@ -18,6 +18,7 @@ import { AlertCircle, Search, Shield, ShieldAlert, CheckCircle, FileText, Calend
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import styles from "../../dashboard/billing/billing.module.css"; // Reuse white theme
+import { generateInvoicePDF } from "@/lib/invoice-pdf";
 
 // --- Types (Mirroring Go Backend — camelCase JSON) ---
 interface AdminUserBillingSummary {
@@ -89,7 +90,13 @@ export default function AdminBillingPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
-                setDetailedBilling(await res.json());
+                const raw = await res.json();
+                // Normalize: backend returns past_invoices (snake) but type uses pastInvoices (camel)
+                setDetailedBilling({
+                    currentMonth: raw.currentMonth || raw.current_month,
+                    pastInvoices: raw.pastInvoices || raw.past_invoices || [],
+                    accountStatus: raw.accountStatus || raw.account_status,
+                });
             }
         } catch (e) {
             console.error(e);
@@ -107,24 +114,19 @@ export default function AdminBillingPage() {
 
     // Action Handlers
     const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
-        const token = localStorage.getItem("jwt");
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/invoices/${invoiceId}/pdf`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error("Failed to download PDF");
-
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${invoiceNumber}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        } catch (e) {
-            alert("Error downloading PDF");
-        }
+        const inv = detailedBilling?.pastInvoices?.find(i => i.id === invoiceId);
+        generateInvoicePDF({
+            invoiceNumber: inv?.invoiceNumber || invoiceNumber,
+            yearMonth: inv?.yearMonth || "",
+            status: inv?.status || "PENDING",
+            dueDate: inv?.dueDate,
+            inputTokens: (inv as any)?.inputTokens || 0,
+            outputTokens: (inv as any)?.outputTokens || 0,
+            fixedFeeInr: (inv as any)?.fixedFeeInr || 1599,
+            variableCostUsd: (inv as any)?.variableCostUsd || 0,
+            totalDisplay: inv?.totalDueDisplay || inv?.calculatedCosts?.totalDueDisplay || "N/A",
+            userEmail: selectedUser?.email,
+        });
     };
 
     const handleMarkPaid = async (invoiceId: string) => {
