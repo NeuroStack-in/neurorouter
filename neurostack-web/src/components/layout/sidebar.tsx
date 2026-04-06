@@ -5,6 +5,7 @@ import { BarChart3, Key, LayoutDashboard, LogOut, Settings, CreditCard } from "l
 import { api } from "@/lib/api"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import styles from "@/app/dashboard/dashboard.module.css"
 
 const sidebarItems = [
@@ -12,6 +13,7 @@ const sidebarItems = [
         title: "Overview",
         href: "/dashboard",
         icon: LayoutDashboard,
+        alwaysAccessible: true,
     },
     {
         title: "API Keys",
@@ -38,6 +40,17 @@ const sidebarItems = [
 export function DashboardSidebar() {
     const pathname = usePathname()
     const router = useRouter()
+    const [isPending, setIsPending] = useState(false)
+
+    useEffect(() => {
+        const profile = localStorage.getItem("user_profile")
+        if (profile) {
+            try {
+                const data = JSON.parse(profile)
+                setIsPending(data.account_status === "PENDING_APPROVAL")
+            } catch {}
+        }
+    }, [])
 
     const handleLogout = async () => {
         try {
@@ -46,6 +59,8 @@ export function DashboardSidebar() {
             console.error("Logout failed", error)
         } finally {
             localStorage.removeItem("jwt")
+            localStorage.removeItem("refresh_token")
+            localStorage.removeItem("user_profile")
             router.push("/auth")
         }
     }
@@ -61,14 +76,18 @@ export function DashboardSidebar() {
             <nav className={styles.sidebarNav}>
                 {sidebarItems.map((item) => {
                     const isActive = pathname === item.href
+                    const isLocked = isPending && !item.alwaysAccessible
                     return (
                         <Link
                             key={item.href}
-                            href={item.href}
+                            href={isLocked ? "/dashboard" : item.href}
                             className={cn(
                                 styles.navItem,
-                                isActive && styles.navItemActive
+                                isActive && styles.navItemActive,
+                                isLocked && "opacity-40 pointer-events-none"
                             )}
+                            aria-disabled={isLocked}
+                            title={isLocked ? "Available after admin approval" : ""}
                         >
                             <item.icon className="h-4 w-4" />
                             {item.title}

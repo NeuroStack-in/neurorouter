@@ -30,6 +30,8 @@ export default function DashboardPage() {
             }
         }
         fetchDashboard()
+        const interval = setInterval(fetchDashboard, 5000)
+        return () => clearInterval(interval)
     }, [])
 
     if (loading) {
@@ -59,6 +61,29 @@ export default function DashboardPage() {
                     <p className="text-slate-600 mb-6">
                         Your account is currently under review. You will receive access to the dashboard and API keys once an admin approves your request.
                     </p>
+                </div>
+            </div>
+        )
+    }
+
+    if (data?.account_status === "BLOCKED") {
+        return (
+            <div className={styles.container}>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center max-w-lg mx-auto">
+                    <div className="p-4 bg-red-50 rounded-full mb-6">
+                        <XCircle className="h-12 w-12 text-red-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-red-800 mb-2">Account Suspended</h2>
+                    <p className="text-slate-600 mb-4">
+                        Your account has been suspended due to non-payment. All API keys have been disabled and API access is blocked.
+                    </p>
+                    <p className="text-slate-500 text-sm mb-6">
+                        Please clear your outstanding invoices to restore access.
+                    </p>
+                    <a href="/dashboard/billing"
+                        className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
+                        View Billing & Pay Now
+                    </a>
                 </div>
             </div>
         )

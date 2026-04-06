@@ -39,12 +39,10 @@ export default function UsagePage() {
         apiKeyService.list().then(setApiKeys).catch(console.error)
     }, [])
 
-    // 2. Fetch Usage Data when filters change
+    // 2. Fetch Usage Data when filters change + auto-refresh every 10s
     useEffect(() => {
         async function fetchUsage() {
-            setLoading(true)
             try {
-                // Pass filters to service
                 const data = await dashboardService.getUsage(
                     activePeriod,
                     selectedModel || undefined,
@@ -57,7 +55,10 @@ export default function UsagePage() {
                 setLoading(false)
             }
         }
+        setLoading(true)
         fetchUsage()
+        const interval = setInterval(fetchUsage, 5000)
+        return () => clearInterval(interval)
     }, [activePeriod, selectedModel, selectedApiKey])
 
     const handlePrevMonth = () => {

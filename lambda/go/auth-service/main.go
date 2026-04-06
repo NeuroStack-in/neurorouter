@@ -95,6 +95,11 @@ func handleRegister(ctx context.Context, req events.APIGatewayProxyRequest) (eve
 		return serverError("cognito signup: " + err.Error())
 	}
 
+	// Create initial invoice for the current month
+	if err := CreateInitialInvoice(ctx, sub); err != nil {
+		log.Printf("WARN: create initial invoice for %s: %v", email, err)
+	}
+
 	// Return the same shape as the Python endpoint
 	return jsonResponse(http.StatusOK, UserOut{
 		ID:        sub,
@@ -237,6 +242,11 @@ func handleGoogleLogin(ctx context.Context, req events.APIGatewayProxyRequest) (
 		}
 		if err := PutUser(ctx, newUser); err != nil {
 			return serverError("create google user record: " + err.Error())
+		}
+
+		// Create initial invoice for the current month
+		if err := CreateInitialInvoice(ctx, cognitoSub); err != nil {
+			log.Printf("WARN: create initial invoice for %s: %v", googleEmail, err)
 		}
 	}
 

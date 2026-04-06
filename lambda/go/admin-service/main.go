@@ -465,12 +465,9 @@ func handleMarkPaid(ctx context.Context, adminID, invID string) (events.APIGatew
 		},
 	})
 
-	// Re-enable API keys
-	keysRestored := reEnableAPIKeys(ctx, inv.UserID)
-
 	writeAudit(ctx, adminID, inv.UserID, "MARK_INVOICE_PAID", "invoices", invID, inv.Status, "PAID", "Manual Payment - Access Restored")
 	return jsonResp(http.StatusOK, map[string]interface{}{
-		"status": "success", "invoice_status": "PAID", "account_status": "ACTIVE", "keys_restored": keysRestored,
+		"status": "success", "invoice_status": "PAID", "account_status": "ACTIVE",
 	})
 }
 

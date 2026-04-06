@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -112,6 +114,51 @@ func GetUserByGoogleID(ctx context.Context, googleID string) (*User, error) {
 		return nil, fmt.Errorf("unmarshal user: %w", err)
 	}
 	return &u, nil
+}
+
+// CreateInitialInvoice creates a PENDING invoice for the current month when a new user signs up.
+func CreateInitialInvoice(ctx context.Context, userID string) error {
+	now := NowISO()
+	ym := now[:7] // "2026-04"
+	invID := fmt.Sprintf("INV-%s-%s", ym, userID[:8])
+
+	// Due date: 1st of next month. Grace: 5th of next month.
+	t, _ := time.Parse("2006-01", ym)
+	nextMonth := t.AddDate(0, 1, 0)
+	dueDate := time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339)
+	graceEnd := time.Date(nextMonth.Year(), nextMonth.Month(), 5, 0, 0, 0, 0, time.UTC).Format(time.RFC3339)
+
+	_, err := ddbClient.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: &invoicesTable,
+		Item: map[string]types.AttributeValue{
+			"id":                    &types.AttributeValueMemberS{Value: invID},
+			"user_id":               &types.AttributeValueMemberS{Value: userID},
+			"invoice_number":        &types.AttributeValueMemberS{Value: invID},
+			"year_month":            &types.AttributeValueMemberS{Value: ym},
+			"status":                &types.AttributeValueMemberS{Value: "PENDING"},
+			"due_date":              &types.AttributeValueMemberS{Value: dueDate},
+			"grace_period_end":      &types.AttributeValueMemberS{Value: graceEnd},
+			"total_input_tokens":    &types.AttributeValueMemberN{Value: "0"},
+			"total_output_tokens":   &types.AttributeValueMemberN{Value: "0"},
+			"rate_input_usd_per_1m": &types.AttributeValueMemberN{Value: "2"},
+			"rate_output_usd_per_1m": &types.AttributeValueMemberN{Value: "8"},
+			"fixed_fee_inr":         &types.AttributeValueMemberN{Value: "1599"},
+			"variable_cost_usd":     &types.AttributeValueMemberN{Value: "0"},
+			"fixed_cost_inr":        &types.AttributeValueMemberN{Value: "1599"},
+			"total_due_display":     &types.AttributeValueMemberS{Value: "₹1,599.00 + $0.00"},
+			"created_at":            &types.AttributeValueMemberS{Value: now},
+			"updated_at":            &types.AttributeValueMemberS{Value: now},
+		},
+		ConditionExpression: aws.String("attribute_not_exists(id)"), // don't overwrite
+	})
+	if err != nil && !isConditionalCheckFailed(err) {
+		return err
+	}
+	return nil
+}
+
+func isConditionalCheckFailed(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "ConditionalCheckFailedException")
 }
 
 // PutUser writes a full user record to DynamoDB.

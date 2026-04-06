@@ -23,6 +23,7 @@ var (
 	ddbClient     *dynamodb.Client
 	usersTable    string
 	invoicesTable string
+	apiKeysTable  string
 )
 
 type User struct {
@@ -50,6 +51,7 @@ func initClients(ctx context.Context) error {
 	ddbClient = dynamodb.NewFromConfig(cfg)
 	usersTable = envOr("TABLE_USERS", "neurorouter-users-dev")
 	invoicesTable = envOr("TABLE_INVOICES", "neurorouter-invoices-dev")
+	apiKeysTable = envOr("TABLE_API_KEYS", "neurorouter-api-keys-dev")
 	return nil
 }
 
@@ -180,9 +182,42 @@ func refreshBilling(ctx context.Context, user *User) string {
 				":u": &dbtypes.AttributeValueMemberS{Value: now.Format(time.RFC3339)},
 			},
 		})
+
+		// Disable all API keys when account is BLOCKED
+		if newStatus == "BLOCKED" {
+			disableUserAPIKeys(ctx, user.ID)
+		}
 	}
 
 	return newStatus
+}
+
+// disableUserAPIKeys sets is_active=false on all API keys for a user.
+func disableUserAPIKeys(ctx context.Context, userID string) {
+	out, err := ddbClient.Query(ctx, &dynamodb.QueryInput{
+		TableName:              &apiKeysTable,
+		IndexName:              aws.String("user_id-index"),
+		KeyConditionExpression: aws.String("user_id = :uid"),
+		ExpressionAttributeValues: map[string]dbtypes.AttributeValue{
+			":uid": &dbtypes.AttributeValueMemberS{Value: userID},
+		},
+	})
+	if err != nil {
+		log.Printf("WARN: query keys for %s: %v", userID, err)
+		return
+	}
+	for _, item := range out.Items {
+		keyID := item["id"].(*dbtypes.AttributeValueMemberS).Value
+		ddbClient.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: &apiKeysTable,
+			Key:       map[string]dbtypes.AttributeValue{"id": &dbtypes.AttributeValueMemberS{Value: keyID}},
+			UpdateExpression: aws.String("SET is_active = :f"),
+			ExpressionAttributeValues: map[string]dbtypes.AttributeValue{
+				":f": &dbtypes.AttributeValueMemberBOOL{Value: false},
+			},
+		})
+		log.Printf("Disabled API key %s for blocked user %s", keyID, userID)
+	}
 }
 
 func main() {

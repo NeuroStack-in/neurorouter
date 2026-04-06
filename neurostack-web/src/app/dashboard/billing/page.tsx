@@ -386,8 +386,10 @@ export default function BillingPage() {
                                             <td className="p-4 text-right space-x-2">
                                                 <Button variant="ghost" size="sm" className="h-8" onClick={() => setSelectedInvoice(inv)}>Details</Button>
                                                 {inv.id && (
-                                                    <Button variant="outline" size="sm" className="h-8" disabled={downloading === inv.id}
-                                                        onClick={() => handleDownloadPDF(inv.id)}>
+                                                    <Button variant="outline" size="sm" className="h-8"
+                                                        disabled={inv.status !== "PAID" || downloading === inv.id}
+                                                        onClick={() => handleDownloadPDF(inv.id)}
+                                                        title={inv.status !== "PAID" ? "PDF available after payment" : "Download PDF"}>
                                                         {downloading === inv.id ? "..." : "PDF"}
                                                     </Button>
                                                 )}
@@ -400,6 +402,22 @@ export default function BillingPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Payment Reminder */}
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-5">
+                <div className="flex items-start gap-3">
+                    <CreditCard className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                    <div>
+                        <h4 className="text-sm font-semibold text-blue-800">Payment Information</h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                            Invoices are generated at the end of each month. Please pay within the due date
+                            (1st of the following month) for uninterrupted service. A 5-day grace period is
+                            provided after the due date. After the grace period, your account will be suspended
+                            and API keys will be disabled until payment is received.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             {/* Invoice Detail Modal */}
             {selectedInvoice && (
@@ -457,9 +475,11 @@ export default function BillingPage() {
                         </CardContent>
                         <CardFooter className="flex gap-2">
                             {selectedInvoice.id && (
-                                <Button variant="outline" className="flex-1" disabled={downloading === selectedInvoice.id}
-                                    onClick={() => handleDownloadPDF(selectedInvoice.id)}>
-                                    {downloading === selectedInvoice.id ? "Generating..." : "Download PDF"}
+                                <Button variant="outline" className="flex-1"
+                                    disabled={selectedInvoice.status !== "PAID" || downloading === selectedInvoice.id}
+                                    onClick={() => handleDownloadPDF(selectedInvoice.id)}
+                                    title={selectedInvoice.status !== "PAID" ? "PDF available after payment" : ""}>
+                                    {downloading === selectedInvoice.id ? "Generating..." : selectedInvoice.status !== "PAID" ? "PDF (Pay first)" : "Download PDF"}
                                 </Button>
                             )}
                             <Button variant="ghost" className="flex-1" onClick={() => setSelectedInvoice(null)}>Close</Button>

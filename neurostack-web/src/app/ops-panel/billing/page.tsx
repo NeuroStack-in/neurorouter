@@ -448,7 +448,10 @@ export default function AdminBillingPage() {
                                                                                                         <AlertCircle className="h-4 w-4" />
                                                                                                     </Button>
                                                                                                 )}
-                                                                                                <Button size="icon" variant="ghost" title="Download PDF" onClick={() => handleDownloadPdf(inv.id, inv.invoiceNumber)}>
+                                                                                                <Button size="icon" variant="ghost"
+                                                                                                    title={inv.status !== "PAID" ? "PDF available after payment" : "Download PDF"}
+                                                                                                    disabled={inv.status !== "PAID"}
+                                                                                                    onClick={() => handleDownloadPdf(inv.id, inv.invoiceNumber)}>
                                                                                                     <FileText className="h-4 w-4" />
                                                                                                 </Button>
                                                                                                 <Button size="icon" variant="ghost" title="Edit Due Date" onClick={() => handleEditDueDate(inv.id, inv.dueDate)}>
