@@ -310,7 +310,7 @@ export default function DashboardPage() {
                     <div className="mt-8 pt-8 border-t border-white/10">
                         <div className="flex items-center justify-between text-sm mb-2">
                             <span className="text-slate-300">Current Plan</span>
-                            <span className="font-semibold text-white">Free Tier</span>
+                            <span className="font-semibold text-white capitalize">{data?.plan_id || "Developer"} Plan</span>
                         </div>
 
                         <div className="w-full bg-white/10 rounded-full h-1.5 mt-2">

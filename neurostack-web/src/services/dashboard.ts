@@ -18,6 +18,7 @@ export interface GraceBanner {
 
 export interface DashboardOverview {
     user_name?: string
+    plan_id?: string
     total_tokens: number
     total_input_tokens: number
     total_output_tokens: number

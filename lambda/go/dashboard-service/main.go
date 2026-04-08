@@ -94,6 +94,7 @@ type GraceBanner struct {
 
 type DashboardOverview struct {
 	UserName          string         `json:"user_name"`
+	PlanID            string         `json:"plan_id"`
 	TotalTokens       int64          `json:"total_tokens"`
 	TotalInputTokens  int64          `json:"total_input_tokens"`
 	TotalOutputTokens int64          `json:"total_output_tokens"`
@@ -212,6 +213,7 @@ func handleOverview(ctx context.Context, userID string) (events.APIGatewayProxyR
 
 	return jsonResp(http.StatusOK, DashboardOverview{
 		UserName:          userName,
+		PlanID:            user.PlanID,
 		TotalTokens:       totalTokens,
 		TotalInputTokens:  totalInputTokens,
 		TotalOutputTokens: totalOutputTokens,

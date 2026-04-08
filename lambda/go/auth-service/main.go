@@ -50,8 +50,18 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		return handleLogout(ctx, req)
 	case method == "GET" && path == "/auth/me":
 		return handleMe(ctx, req)
+	case method == "PUT" && path == "/auth/me":
+		return handleUpdateMe(ctx, req)
 	case method == "POST" && path == "/auth/refresh":
 		return handleRefresh(ctx, req)
+	case method == "GET" && path == "/auth/team":
+		return handleTeamList(ctx, req)
+	case method == "POST" && path == "/auth/team/invite":
+		return handleTeamInvite(ctx, req)
+	case (method == "POST" || method == "GET") && path == "/auth/team/accept":
+		return handleTeamAccept(ctx, req)
+	case method == "DELETE" && strings.HasPrefix(path, "/auth/team/"):
+		return handleTeamRemove(ctx, req)
 	default:
 		return jsonResponse(http.StatusNotFound, ErrorResponse{Detail: "Not found"})
 	}
@@ -177,7 +187,7 @@ func handleGoogleLogin(ctx context.Context, req events.APIGatewayProxyRequest) (
 	}
 
 	// Verify the Google token by calling Google's tokeninfo endpoint
-	googleEmail, googleSub, err := verifyGoogleToken(ctx, body.Token)
+	googleEmail, googleSub, googleName, err := verifyGoogleToken(ctx, body.Token)
 	if err != nil {
 		return jsonResponse(http.StatusUnauthorized, ErrorResponse{Detail: "Invalid Google token"})
 	}
@@ -192,12 +202,17 @@ func handleGoogleLogin(ctx context.Context, req events.APIGatewayProxyRequest) (
 		if !user.IsActive {
 			return jsonResponse(http.StatusUnauthorized, ErrorResponse{Detail: "User inactive"})
 		}
-		// Update google_id if missing
+		// Update google_id and name if missing
+		updates := map[string]interface{}{}
 		if user.GoogleID == "" {
-			_ = UpdateUserFields(ctx, user.ID, map[string]interface{}{
-				"google_id":     googleSub,
-				"auth_provider": "google",
-			})
+			updates["google_id"] = googleSub
+			updates["auth_provider"] = "google"
+		}
+		if user.FullName == "" && googleName != "" {
+			updates["full_name"] = googleName
+		}
+		if len(updates) > 0 {
+			_ = UpdateUserFields(ctx, user.ID, updates)
 		}
 		// Refresh billing
 		status, _ := RefreshBillingStatus(ctx, user)
@@ -206,7 +221,7 @@ func handleGoogleLogin(ctx context.Context, req events.APIGatewayProxyRequest) (
 		}
 	} else {
 		// New Google user — create via Cognito admin
-		cognitoSub, err := CognitoAdminCreateUser(ctx, googleEmail, "")
+		cognitoSub, err := CognitoAdminCreateUser(ctx, googleEmail, googleName)
 		if err != nil {
 			if strings.Contains(err.Error(), "UsernameExistsException") {
 				// User exists in Cognito but not DynamoDB — look up the sub
@@ -232,6 +247,7 @@ func handleGoogleLogin(ctx context.Context, req events.APIGatewayProxyRequest) (
 		newUser := &User{
 			ID:            cognitoSub,
 			Email:         googleEmail,
+			FullName:      googleName,
 			GoogleID:      googleSub,
 			AuthProvider:  "google",
 			IsActive:      true,
@@ -333,6 +349,32 @@ func handleMe(ctx context.Context, req events.APIGatewayProxyRequest) (events.AP
 	})
 }
 
+// PUT /auth/me — update display name
+func handleUpdateMe(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	accessToken := extractBearerToken(req)
+	if accessToken == "" {
+		return jsonResponse(http.StatusUnauthorized, ErrorResponse{Detail: "Not authenticated"})
+	}
+	sub, _, err := CognitoGetUser(ctx, accessToken)
+	if err != nil {
+		return jsonResponse(http.StatusUnauthorized, ErrorResponse{Detail: "Invalid token"})
+	}
+
+	var body struct {
+		FullName string `json:"full_name"`
+	}
+	json.Unmarshal([]byte(req.Body), &body)
+
+	if body.FullName != "" {
+		_ = UpdateUserFields(ctx, sub, map[string]interface{}{
+			"full_name":  body.FullName,
+			"updated_at": NowISO(),
+		})
+	}
+
+	return jsonResponse(http.StatusOK, map[string]string{"status": "updated"})
+}
+
 // POST /auth/refresh (NEW — not in Python backend)
 // Exchanges a Cognito refresh token for a new access token.
 func handleRefresh(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -360,27 +402,28 @@ func handleRefresh(ctx context.Context, req events.APIGatewayProxyRequest) (even
 
 // verifyGoogleToken calls Google's tokeninfo endpoint to verify a Google ID token.
 // Returns (email, sub) on success.
-func verifyGoogleToken(ctx context.Context, idToken string) (string, string, error) {
+func verifyGoogleToken(ctx context.Context, idToken string) (email, sub, name string, err error) {
 	url := "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", "", fmt.Errorf("google tokeninfo request: %w", err)
+		return "", "", "", fmt.Errorf("google tokeninfo request: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return "", "", fmt.Errorf("google tokeninfo returned %d", resp.StatusCode)
+		return "", "", "", fmt.Errorf("google tokeninfo returned %d", resp.StatusCode)
 	}
 	var info struct {
 		Email string `json:"email"`
 		Sub   string `json:"sub"`
+		Name  string `json:"name"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		return "", "", fmt.Errorf("decode tokeninfo: %w", err)
+		return "", "", "", fmt.Errorf("decode tokeninfo: %w", err)
 	}
 	if info.Email == "" || info.Sub == "" {
-		return "", "", fmt.Errorf("missing email or sub in tokeninfo")
+		return "", "", "", fmt.Errorf("missing email or sub in tokeninfo")
 	}
-	return strings.ToLower(info.Email), info.Sub, nil
+	return strings.ToLower(info.Email), info.Sub, info.Name, nil
 }
 
 // extractBearerToken gets the token from the Authorization header.

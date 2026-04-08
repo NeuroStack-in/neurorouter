@@ -306,7 +306,7 @@ export default function BillingPage() {
                 <div className="space-y-8">
                     <Card>
                         <CardHeader>
-                            <CardTitle>NeuroRouter {data.current_plan?.name || "Pro"} Plan</CardTitle>
+                            <CardTitle>NeuroRouter {data.current_plan?.name || "Developer"} Plan</CardTitle>
                             <CardDescription>Your active infrastructure plan.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm">
