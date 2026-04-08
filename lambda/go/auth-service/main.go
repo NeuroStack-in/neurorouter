@@ -54,6 +54,10 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		return handleUpdateMe(ctx, req)
 	case method == "POST" && path == "/auth/refresh":
 		return handleRefresh(ctx, req)
+	case method == "POST" && path == "/auth/forgot-password":
+		return handleForgotPassword(ctx, req)
+	case method == "POST" && path == "/auth/reset-password":
+		return handleResetPassword(ctx, req)
 	case method == "GET" && path == "/auth/team":
 		return handleTeamList(ctx, req)
 	case method == "POST" && path == "/auth/team/invite":
@@ -396,6 +400,66 @@ func handleRefresh(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		TokenType:   "bearer",
 		ExpiresIn:   expiresIn,
 	})
+}
+
+// POST /auth/forgot-password — sends a Cognito verification code to the user's email
+func handleForgotPassword(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var body struct {
+		Email string `json:"email"`
+	}
+	json.Unmarshal([]byte(req.Body), &body)
+	email := strings.ToLower(strings.TrimSpace(body.Email))
+	if email == "" {
+		return jsonResponse(http.StatusBadRequest, ErrorResponse{Detail: "Email is required"})
+	}
+
+	_, err := cognitoClient.ForgotPassword(ctx, &cip.ForgotPasswordInput{
+		ClientId: &appClientID,
+		Username: &email,
+	})
+	if err != nil {
+		log.Printf("WARN: forgot password for %s: %v", email, err)
+		// Don't reveal if email exists or not
+	}
+
+	return jsonResponse(http.StatusOK, map[string]string{
+		"message": "If an account exists with this email, a verification code has been sent.",
+	})
+}
+
+// POST /auth/reset-password — confirms the new password with verification code
+func handleResetPassword(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	var body struct {
+		Email    string `json:"email"`
+		Code     string `json:"code"`
+		Password string `json:"password"`
+	}
+	json.Unmarshal([]byte(req.Body), &body)
+	email := strings.ToLower(strings.TrimSpace(body.Email))
+	if email == "" || body.Code == "" || body.Password == "" {
+		return jsonResponse(http.StatusBadRequest, ErrorResponse{Detail: "Email, code, and password are required"})
+	}
+
+	_, err := cognitoClient.ConfirmForgotPassword(ctx, &cip.ConfirmForgotPasswordInput{
+		ClientId:         &appClientID,
+		Username:         &email,
+		ConfirmationCode: &body.Code,
+		Password:         &body.Password,
+	})
+	if err != nil {
+		if strings.Contains(err.Error(), "CodeMismatchException") {
+			return jsonResponse(http.StatusBadRequest, ErrorResponse{Detail: "Invalid verification code"})
+		}
+		if strings.Contains(err.Error(), "ExpiredCodeException") {
+			return jsonResponse(http.StatusBadRequest, ErrorResponse{Detail: "Verification code has expired"})
+		}
+		if strings.Contains(err.Error(), "InvalidPasswordException") {
+			return jsonResponse(http.StatusBadRequest, ErrorResponse{Detail: "Password does not meet requirements (min 8 chars, uppercase, lowercase, digit)"})
+		}
+		return jsonResponse(http.StatusBadRequest, ErrorResponse{Detail: "Password reset failed"})
+	}
+
+	return jsonResponse(http.StatusOK, map[string]string{"message": "Password has been reset successfully"})
 }
 
 // --- Helpers ---

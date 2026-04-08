@@ -20,7 +20,7 @@ import { Eye, EyeOff, Mail, Lock, User, Loader2, AlertCircle } from "lucide-reac
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import styles from "./auth.module.css"
 
-type AuthView = "login" | "register"
+type AuthView = "login" | "register" | "forgot" | "reset"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL!
 
@@ -38,6 +38,10 @@ export default function AuthPage() {
         confirmPassword: "",
         name: "",
     })
+    const [resetEmail, setResetEmail] = useState("")
+    const [resetCode, setResetCode] = useState("")
+    const [newPassword, setNewPassword] = useState("")
+    const [resetMessage, setResetMessage] = useState("")
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target
@@ -166,6 +170,52 @@ export default function AuthPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleForgotPassword = async () => {
+        if (!resetEmail.trim()) { setErrors({ submit: "Email is required" }); return }
+        setLoading(true)
+        setErrors({})
+        try {
+            const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: resetEmail }),
+            })
+            const data = await res.json()
+            setResetMessage(data.message || "Verification code sent to your email.")
+            setView("reset")
+        } catch {
+            setErrors({ submit: "Something went wrong. Try again." })
+        }
+        setLoading(false)
+    }
+
+    const handleResetPassword = async () => {
+        if (!resetCode.trim() || !newPassword.trim()) {
+            setErrors({ submit: "Code and new password are required" }); return
+        }
+        setLoading(true)
+        setErrors({})
+        try {
+            const res = await fetch(`${API_BASE}/auth/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: resetEmail, code: resetCode, password: newPassword }),
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                setErrors({ submit: data.detail || "Reset failed" })
+            } else {
+                setResetMessage("Password reset successfully! You can now sign in.")
+                setView("login")
+                setFormData(prev => ({ ...prev, email: resetEmail, password: "" }))
+                setResetEmail(""); setResetCode(""); setNewPassword("")
+            }
+        } catch {
+            setErrors({ submit: "Something went wrong. Try again." })
+        }
+        setLoading(false)
     }
 
     const handleGoogleAuth = async (response: any) => {
@@ -310,7 +360,7 @@ export default function AuthPage() {
                                     }
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            {(view === "login" || view === "register") && <CardContent className="space-y-4">
                                 {errors.submit && (
                                     <Alert variant="destructive" className="mb-4 bg-red-50 border-red-200 text-red-600">
                                         <AlertCircle className="h-4 w-4" />
@@ -382,6 +432,7 @@ export default function AuthPage() {
                                                     type="button"
                                                     className={styles.forgotPassword}
                                                     tabIndex={-1}
+                                                    onClick={() => { setView("forgot"); setErrors({}); setResetMessage(""); setResetEmail(formData.email) }}
                                                 >
                                                     Forgot password?
                                                 </button>
@@ -473,16 +524,73 @@ export default function AuthPage() {
                                         )}
                                     </Button>
                                 </form>
-                            </CardContent>
+                            </CardContent>}
+                            {/* Forgot Password View */}
+                            {view === "forgot" && (
+                                <CardContent className="px-8 pb-8">
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Forgot Password</h3>
+                                    <p className="text-sm text-slate-500 mb-4">Enter your email and we'll send a verification code.</p>
+                                    {errors.submit && (
+                                        <Alert variant="destructive" className="mb-4"><AlertCircle className="h-4 w-4" /><AlertDescription>{errors.submit}</AlertDescription></Alert>
+                                    )}
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label>Email Address</Label>
+                                            <Input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="you@example.com" autoFocus />
+                                        </div>
+                                        <Button className="w-full" onClick={handleForgotPassword} disabled={loading}>
+                                            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : "Send Verification Code"}
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            )}
+
+                            {/* Reset Password View */}
+                            {view === "reset" && (
+                                <CardContent className="px-8 pb-8">
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Reset Password</h3>
+                                    <p className="text-sm text-slate-500 mb-1">A verification code was sent to <strong>{resetEmail}</strong></p>
+                                    {resetMessage && <p className="text-sm text-green-600 mb-4">{resetMessage}</p>}
+                                    {errors.submit && (
+                                        <Alert variant="destructive" className="mb-4"><AlertCircle className="h-4 w-4" /><AlertDescription>{errors.submit}</AlertDescription></Alert>
+                                    )}
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label>Verification Code</Label>
+                                            <Input type="text" value={resetCode} onChange={e => setResetCode(e.target.value)} placeholder="Enter 6-digit code" autoFocus />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>New Password</Label>
+                                            <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 8 chars, uppercase, lowercase, digit" />
+                                        </div>
+                                        <Button className="w-full" onClick={handleResetPassword} disabled={loading}>
+                                            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...</> : "Reset Password"}
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            )}
+
                             <CardFooter className="flex justify-center border-t border-slate-100 pt-6 mt-2">
                                 <p className="text-sm text-slate-500">
-                                    {view === "login" ? "Don't have an account? " : "Already have an account? "}
-                                    <button
-                                        onClick={toggleView}
-                                        className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors focus:outline-none focus:underline"
-                                    >
-                                        {view === "login" ? "Sign up" : "Sign in"}
-                                    </button>
+                                    {view === "forgot" || view === "reset" ? (
+                                        <>
+                                            Remember your password?{" "}
+                                            <button onClick={() => { setView("login"); setErrors({}); setResetMessage("") }}
+                                                className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors focus:outline-none">
+                                                Sign in
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {view === "login" ? "Don't have an account? " : "Already have an account? "}
+                                            <button
+                                                onClick={toggleView}
+                                                className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors focus:outline-none focus:underline"
+                                            >
+                                                {view === "login" ? "Sign up" : "Sign in"}
+                                            </button>
+                                        </>
+                                    )}
                                 </p>
                             </CardFooter>
                         </Card>
