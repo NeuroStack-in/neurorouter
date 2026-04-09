@@ -300,12 +300,12 @@ export default function DashboardPage() {
                 </div>
 
                 <div className={cn(styles.card, "p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none")}>
-                    <h3 className="text-lg font-semibold mb-2">Upgrade to Pro</h3>
-                    <p className="text-slate-300 text-sm mb-6">Unlock higher rate limits and advanced analytics for your applications.</p>
+                    <h3 className="text-lg font-semibold mb-2">Your Plan</h3>
+                    <p className="text-slate-300 text-sm mb-6">Manage your subscription and explore available plans.</p>
 
-                    <button className="w-full py-2.5 bg-white text-slate-900 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-lg shadow-white/10">
+                    <a href="/pricing" className="block w-full py-2.5 bg-white text-slate-900 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-lg shadow-white/10 text-center">
                         View Plans
-                    </button>
+                    </a>
 
                     <div className="mt-8 pt-8 border-t border-white/10">
                         <div className="flex items-center justify-between text-sm mb-2">

@@ -341,7 +341,7 @@ export default function BillingPage() {
                             <CardDescription className="text-slate-500">Contact support for billing inquiries or custom enterprise plans.</CardDescription>
                         </CardHeader>
                         <CardFooter>
-                            <Button variant="outline" className="w-full">Contact Support</Button>
+                            <a href="/contact"><Button variant="outline" className="w-full">Contact Support</Button></a>
                         </CardFooter>
                     </Card>
                 </div>
