@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -232,6 +233,8 @@ func handleTeamRemove(ctx context.Context, req events.APIGatewayProxyRequest) (e
 
 	path := strings.TrimSuffix(req.Path, "/")
 	email := strings.TrimPrefix(path, "/auth/team/")
+	email, _ = url.PathUnescape(email) // decode %40 → @
+	email = strings.ToLower(strings.TrimSpace(email))
 	if email == "" {
 		return jsonResponse(http.StatusBadRequest, ErrorResponse{Detail: "Email required"})
 	}
