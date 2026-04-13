@@ -68,8 +68,11 @@ export function DashboardSidebar() {
     return (
         <div className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
-                <Link href="/dashboard" className={styles.sidebarTitle}>
-                    <img src="/logo.png" alt="NeuroRouter" className="h-8 w-auto" />
+                <Link href="/dashboard" className={styles.sidebarTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <img src="/logo.png" alt="NeuroRouter" className="h-9 w-auto" />
+                    <span style={{ fontFamily: 'Georgia, "Palatino Linotype", "Book Antiqua", serif', fontWeight: 'bold', fontSize: '1.8rem', lineHeight: 1, marginTop: '0.25rem' }}>
+                        <span style={{ color: '#0A1930' }}>Neuro</span><span style={{ color: '#E05A1E' }}>Router</span>
+                    </span>
                 </Link>
             </div>
 

@@ -320,9 +320,6 @@ export default function AuthPage() {
                 <div className={styles.contentWrapper}>
                     {/* Left Side - Branding */}
                     <div className={styles.brandSection}>
-                        <div className={styles.brandLogo}>
-                            <img src="/logo.png" alt="NeuroRouter" className="h-10 w-auto" />
-                        </div>
                         <h1 className={styles.brandTitle}>
                             AI-Powered Development Platform
                         </h1>

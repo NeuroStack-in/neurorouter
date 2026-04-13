@@ -13,9 +13,11 @@ export function Footer() {
                     {/* Brand */}
                     <div className="space-y-4">
                         <Link href="/" prefetch={false} className="inline-block">
-                            <span className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                                <img src="/logo.png" alt="NeuroRouter" className="h-8 w-auto" />
-                                <span className="sr-only">NeuroRouter</span>
+                            <span className="font-bold tracking-tight text-slate-900 flex items-center gap-1">
+                                <img src="/logo.png" alt="NeuroRouter" className="h-9 w-auto" />
+                                <span style={{ fontFamily: 'Georgia, "Palatino Linotype", "Book Antiqua", serif', fontSize: '1.8rem', lineHeight: 1, marginTop: '0.25rem' }}>
+                                    <span style={{ color: '#0A1930' }}>Neuro</span><span style={{ color: '#E05A1E' }}>Router</span>
+                                </span>
                             </span>
                         </Link>
 

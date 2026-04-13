@@ -13,10 +13,12 @@ export function Navbar() {
                 {/* Logo */}
                 <Link
                     href="/"
-                    className="flex items-center gap-2 font-bold text-xl tracking-tight"
+                    className="flex items-center gap-1 font-bold tracking-tight"
                 >
-                    <img src="/logo.png" alt="NeuroRouter" className="h-8 w-auto" />
-                    <span className="sr-only">NeuroRouter</span>
+                    <img src="/logo.png" alt="NeuroRouter" className="h-9 w-auto" />
+                    <span style={{ fontFamily: 'Georgia, "Palatino Linotype", "Book Antiqua", serif', fontSize: '1.8rem', lineHeight: 1, marginTop: '0.25rem' }}>
+                        <span style={{ color: '#0A1930' }}>Neuro</span><span style={{ color: '#E05A1E' }}>Router</span>
+                    </span>
                 </Link>
 
                 {/* Nav Links */}
