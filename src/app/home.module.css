@@ -1,0 +1,303 @@
+/* home.module.css - Premium White Theme */
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.heroSection {
+    position: relative;
+    display: flex;
+    min-height: 90vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding-top: 6rem;
+    background-color: #ffffff;
+}
+
+.heroBackground {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image:
+        radial-gradient(circle at 100% 0%, rgba(244, 124, 40, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(6, 42, 69, 0.08) 0%, transparent 50%);
+    background-size: 100% 100%;
+}
+
+.heroContent {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 64rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    padding: 0.35rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.badge:hover {
+    border-color: #cbd5e1;
+    color: #062a45;
+    transform: translateY(-1px);
+}
+
+.heroTitle {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: #062a45;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .heroTitle {
+        font-size: 5rem;
+    }
+}
+
+.gradientText {
+    background: linear-gradient(135deg, #062a45 0%, #f47c28 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+}
+
+.heroDescription {
+    font-size: 1.25rem;
+    color: #475569;
+    max-width: 42rem;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+}
+
+.section {
+    padding: 8rem 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Features */
+.featuresGrid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    max-width: 80rem;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .featuresGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .featuresGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.featureCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    height: 100%;
+}
+
+.featureCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.featureVisual {
+    position: relative;
+    height: 240px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    overflow: hidden;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.featureContent {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.featureTitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+}
+
+.featureDescription {
+    font-size: 0.95rem;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* Super Card (Used for shared card styling) */
+.superCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    /* box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); */
+    transition: all 0.2s ease;
+}
+
+.superCard:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Trusted By */
+.trustedSection {
+    border-bottom: 1px solid #f1f5f9;
+    padding: 4rem 0;
+    background: #ffffff;
+}
+
+.trustedTitle {
+    margin-bottom: 2.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.scroller {
+    max-width: 100%;
+    overflow: hidden;
+    -webkit-mask: linear-gradient(90deg, transparent, white 20%, white 80%, transparent);
+    mask: linear-gradient(90deg, transparent, white 20%, white 80%, transparent);
+}
+
+.scrollerInner {
+    padding-block: 1rem;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4rem;
+    width: max-content;
+    align-items: center;
+    animation: scroll 30s linear infinite;
+}
+
+.logoItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #94a3b8;
+    flex-shrink: 0;
+    transition: color 0.3s;
+    white-space: nowrap;
+}
+
+.logoItem:hover {
+    color: #475569;
+}
+
+@keyframes scroll {
+    to {
+        transform: translate(calc(-50% - 2rem));
+    }
+}
+
+/* How It Works */
+.howItWorksSection {
+    background-color: #f8fafc;
+    padding: 8rem 0;
+}
+
+/* Contact / CTA */
+.contactSection {
+    position: relative;
+    overflow: hidden;
+    background-color: #ffffff;
+    padding: 8rem 0;
+}
+
+/* Pricing */
+.pricingGrid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    max-width: 80rem;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .pricingGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.pricingCard {
+    display: flex;
+    flex-direction: column;
+    padding: 2.5rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.pricingCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.pricingCard.highlight {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6, 0 10px 15px -3px rgba(59, 130, 246, 0.1);
+    background: #ffffff;
+}
+
+/* Diagram */
+.diagramContainer {
+    position: relative;
+    margin: 0 auto;
+    display: flex;
+    max-width: 64rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .diagramContainer {
+        flex-direction: row;
+    }
+}
